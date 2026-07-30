@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "Jatek"
+version = "1.0.0"
+id = "artifacts/jatek-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/mobile/" ]
+localPort = 25896
+
+[services.development]
+run = "pnpm --filter @workspace/jatek-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/jatek-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/jatek-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "25896"
+BASE_PATH = "/mobile/"

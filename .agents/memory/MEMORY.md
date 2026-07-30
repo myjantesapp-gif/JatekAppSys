@@ -1,0 +1,4 @@
+- [Jatek API auth pattern](jatek-api-auth.md) — API uses JWT Bearer tokens; no cookie sessions; always send Authorization header in fetch calls.
+- [Jatek notification route order](jatek-notification-routes.md) — PATCH /notifications/read-all must be registered before /notifications/:id/read in Express to avoid route-param capture.
+- [Jatek mobile API base resolution](jatek-mobile-apibase.md) — Always use getApiBaseSafe() from lib/apiBase.ts, never raw process.env.EXPO_PUBLIC_DOMAIN, which is empty in LAN/Expo-Go dev mode.
+- [Jatek mobile EAS build setup](jatek-mobile-eas.md) — EAS + pnpm workspace quirks: use app.config.js not .ts, set PNPM_VERSION=10.0.0, run via node_modules/.bin/eas.

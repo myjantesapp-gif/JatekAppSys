@@ -1,0 +1,94 @@
+You are an expert React Native + Expo developer.
+
+**CRITICAL INSTRUCTIONS - READ CAREFULLY BEFORE DOING ANYTHING:**
+
+1. **FIRST STEP - PROJECT ANALYSIS**  
+   Before writing or modifying any code, explore the current project structure.  
+   Run `ls -la` and list all folders and important files (especially anything related to React Native / Expo / mobile app).  
+   Identify clearly:
+   - Where the mobile frontend (React Native / Expo) code lives.
+   - Do NOT touch ANY backend code, any web app (Next.js, React web, etc.), APIs, databases, or server-side files.
+   - Confirm you are ONLY working inside the mobile React Native part of the project.
+
+2. **SCOPE RESTRICTION**  
+   - Modify **ONLY** the frontend of the mobile application (React Native).  
+   - Do **NOT** create a new project from scratch if a mobile app already exists.  
+   - Do **NOT** touch backend or web app in any way.  
+   - Goal = save time and Replit compute credits.
+
+3. **PRIORITY**  
+   Focus **EXCLUSIVELY** on the **Home Screen** (page d'accueil) right now.  
+   We will apply the same design system to other screens later. For now, only perfect the home page.
+
+**EXACT VISUAL REQUIREMENTS**  
+Reproduce the Jatek app **Home Screen pixel-perfect** by combining ALL attached screenshots (logo screen + multiple home screen states from Figma prototype):
+
+**Global style:**
+- Vibrant pink header (#E91E63 or exact match) with wavy bottom edge
+- All texts in French exactly as shown
+- Status bar (time 9:41, lock icon, signal, WiFi, battery)
+- Bottom tab bar exactly as in screenshots:
+  - Jatek (pink active)
+  - Restaurants (burger icon)
+  - Favoris (heart icon)
+  - Commandes (shopping bag icon)
+
+**Home Screen sections (in scrollable order, matching all screenshots):**
+
+1. **Header**  
+   - Left: location pin + "Livraison en 5R22+CVC2" + dropdown arrow  
+   - Right: circular user avatar (pink)
+
+2. **Search bar**  
+   - White rounded pill + magnifying glass + placeholder "Rechercher dans Jatek..."
+
+3. **Top categories (two possible layouts - implement the most complete one)**  
+   - Version A: Two big cards side-by-side  
+     • Left: light pink bg + realistic burger illustration + "Restaurants" + pink "Promo" badge on some versions  
+     • Right: light beige bg + "Supermarche"  
+   - Version B: Horizontal scroll of 5 pink rounded pill categories:  
+     Burger • Tacos • Pizza • shawarma • Couscous
+
+4. **Service squares row (when visible)**  
+   - 4 colored rounded squares:  
+     Light cyan → "Service Coursier"  
+     Pink → "Boutiques"  
+     Lime green → "Offers"  
+     Purple → "Parapharm"
+
+5. **Promotional banner** (appears in multiple places)  
+   - Bright pink full-width rectangle  
+   - "-10%" (huge white) + "Jatek" (white) + "WELCOME10" (bright green)
+
+6. **Découvrir en vidéo** section  
+   - Title left + pink "Voir plus" button right  
+   - Horizontal scroll of 4 gray video placeholders with centered white play icon
+
+7. **Pres de chez vous** OR **Tous les Restaurants** section  
+   - Title left + pink "Voir plus" button right  
+   - Horizontal OR 2-column grid of restaurant cards (Asia House)  
+   - Each card must include:  
+     • Food photo (multiple Asian dishes)  
+     • Green "Nouveau" or pink "Promo" badge (top-left) on some cards  
+     • Rating ★ 4.5 (+100)  
+     • Restaurant name "Asia House"  
+     • Bottom info: "20 - 30 min" • "10 MAD" • "152m" (with icons)
+
+8. **Big promotional banner** (appears lower in some screenshots)  
+   - Same as point 5
+
+**Technical requirements:**
+- Expo + React Navigation (bottom tabs)
+- Use NativeWind (Tailwind) if already in project, otherwise precise StyleSheet
+- ScrollView for the whole home screen
+- Realistic food images via high-quality placeholder URLs (unsplash/picsum food style)
+- Exact shadows, rounded corners, spacing and colors as in Figma
+- Make it look 100% identical on iPhone 14/15/16
+
+**Workflow:**
+1. First, show me the full project analysis (folders/files found).
+2. Confirm you understood the restrictions (mobile front only + home screen only).
+3. Then, give me the complete updated code ONLY for the Home Screen component (and any new styles/components it needs).
+4. Do not implement other screens or backend changes yet.
+
+Start by analyzing the project now.

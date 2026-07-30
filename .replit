@@ -1,0 +1,93 @@
+modules = ["nodejs-20", "web", "bash", "postgresql-16"]
+
+  [deployment]
+  router = "application"
+deploymentTarget = "autoscale"
+run = ["bash", "scripts/start-production.sh"]
+build = ["bash", "scripts/build-production.sh"]
+
+  [deployment.postBuild]
+  args = ["pnpm", "store", "prune"]
+  env = { "CI" = "true" }
+
+  [workflows]
+
+  [agent]
+  stack = "BEST_EFFORT_FALLBACK"
+expertMode = true
+  integrations = ["twilio:1.0.0"]
+
+  [postMerge]
+  path = "scripts/post-merge.sh"
+  timeoutMs = 20000
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 8082
+externalPort = 3003
+
+[[ports]]
+localPort = 8090
+externalPort = 5000
+
+[[ports]]
+localPort = 18244
+externalPort = 3000
+
+[[ports]]
+localPort = 18245
+externalPort = 4200
+
+[[ports]]
+localPort = 19167
+externalPort = 3001
+
+[[ports]]
+localPort = 25896
+externalPort = 3002
+
+[[ports]]
+localPort = 25897
+externalPort = 5173
+
+  [nix]
+channel = "stable-25_05"
+  packages = ["eas-cli", "unzipNLS"]
+
+  [userenv]
+
+  [userenv.shared]
+VAPID_PUBLIC_KEY = "BLvX52wA4BwrhPabN3D4gcmgP-FR8mZOOZs9S-fPW9jQ8PUp7xqG8mCfelF9DPBBAdSYBHANTIv1W5LPlxMra_g"
+VAPID_SUBJECT = "mailto:admin@jatek.ma"
+TWILIO_FROM_NUMBER = "+15072600620"
+
+  [userenv.development]
+INFOBIP_WA_SENDER = "+44 7860 088970"
+  EXPO_PUBLIC_DOMAIN = "ma.jatek.app"
+
+  [userenv.production]
+INFOBIP_WA_SENDER = "+44 7860 088970"
+  EXPO_PUBLIC_DOMAIN = "ma.jatek.app"
+ALLOWED_ORIGINS = "https://c242aedf-c2ef-40b5-8095-e3992aa34a14-00-1y412fgtbqgy8.kirk.replit.dev,https://ma.jatek.app"
+
+  [objectStorage]
+defaultBucketID = "replit-objstore-b5c29047-f4b3-4a45-b019-411ecc254f0f"

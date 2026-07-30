@@ -1,0 +1,209 @@
+OBJECTIF GLOBAL:
+Refondre UNIQUEMENT le frontend (UI/UX) de mon application mobile Expo (React Native)
+pour obtenir une expérience similaire à Talabat (structure, composants, hiérarchie),
+tout en gardant EXACTEMENT la même logique métier et backend.
+
+Palette:
+- Primary: Rose (#E91E63)
+- Secondary: Turquoise (#00BFA6)
+- Accent: Jaune olive (#A3B18A)
+
+----------------------------------------
+RÈGLES CRITIQUES (NE JAMAIS VIOLER)
+----------------------------------------
+- NE PAS modifier le backend
+- NE PAS modifier les appels API
+- NE PAS casser la navigation
+- NE PAS supprimer de fonctionnalités
+- NE PAS renommer props critiques
+- ZÉRO régression autorisée
+- TOUJOURS tester après chaque modification
+
+----------------------------------------
+ETAPE 1 — AUDIT COMPLET (OBLIGATOIRE)
+----------------------------------------
+- Scanner tout le projet Expo
+- Lister:
+  - Screens
+  - Composants UI
+  - Styles inline
+  - Librairies UI
+- Identifier incohérences UI
+- NE RIEN MODIFIER avant la fin de l’audit
+
+----------------------------------------
+ETAPE 2 — DESIGN SYSTEM CENTRALISÉ
+----------------------------------------
+Créer dossier `/theme`:
+
+colors.ts
+spacing.ts
+typography.ts
+radius.ts
+shadows.ts
+index.ts
+
+colors.ts:
+export const colors = {
+  primary: "#E91E63",
+  secondary: "#00BFA6",
+  accent: "#A3B18A",
+  background: "#FFFFFF",
+  surface: "#F8F9FA",
+  textPrimary: "#1A1A1A",
+  textSecondary: "#6B6B6B",
+  border: "#E5E5E5",
+  error: "#D32F2F",
+};
+
+spacing.ts:
+export const spacing = [4,8,12,16,20,24,32];
+
+radius.ts:
+export const radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  pill: 999
+};
+
+----------------------------------------
+ETAPE 3 — FONTS (EXPO SAFE)
+----------------------------------------
+- Installer expo-font si non présent
+- Charger fonts dans App.tsx avec useFonts
+- Bloquer render jusqu’au chargement
+- Fallback system font
+
+----------------------------------------
+ETAPE 4 — THEME PROVIDER
+----------------------------------------
+- Créer ThemeContext
+- Injecter globalement
+- Connecter avec React Navigation theme
+
+----------------------------------------
+ETAPE 5 — COMPOSANTS UI STANDARD
+----------------------------------------
+Créer ou refactoriser:
+
+1. Button
+- primary: fond rose, texte blanc
+- secondary: fond gris léger
+- outline: bordure
+
+2. Card
+- fond blanc
+- radius élevé
+- ombre légère
+- padding important
+
+3. Text
+- basé sur typography centralisée
+
+4. Input
+- focus state
+- error state
+
+5. Badge
+- petit, fond olive ou turquoise
+
+6. Loader
+- visible sur chaque call API
+
+Tous les composants DOIVENT utiliser `/theme`
+
+----------------------------------------
+ETAPE 6 — STRUCTURE TALABAT-LIKE
+----------------------------------------
+Implémenter structure UX similaire à Talabat:
+
+HOME:
+- search bar en haut
+- catégories scroll horizontales
+- liste restaurants (cards)
+
+RESTAURANT:
+- image cover
+- infos (nom, rating, temps)
+- liste produits
+- bouton ajouter panier visible
+
+CART:
+- liste items
+- total
+- bouton checkout visible (rose)
+
+CHECKOUT:
+- adresse
+- paiement
+- résumé
+- confirmation claire
+
+----------------------------------------
+ETAPE 7 — NAVIGATION (ZONE SENSIBLE)
+----------------------------------------
+- Ne jamais casser navigation existante
+- Modifier uniquement styles:
+
+Header:
+- background: primary
+- text: blanc
+
+Tabs:
+- active: primary
+- inactive: gris
+
+----------------------------------------
+ETAPE 8 — STYLE VISUEL
+----------------------------------------
+- Boutons arrondis (pill)
+- UI aérée (beaucoup de spacing)
+- Ombres légères
+- Icônes simples
+- CTA très visibles
+
+----------------------------------------
+ETAPE 9 — MIGRATION SANS RISQUE
+----------------------------------------
+- Refactor écran par écran
+- Tester chaque écran
+- Garder anciens styles temporairement si nécessaire
+- Ne jamais faire de refactor global brutal
+
+----------------------------------------
+ETAPE 10 — PERFORMANCE
+----------------------------------------
+- Optimiser FlatList
+- Utiliser React.memo
+- Eviter re-render inutiles
+- Optimiser images
+
+----------------------------------------
+ETAPE 11 — GESTION ERREURS
+----------------------------------------
+- Loader obligatoire
+- Messages erreur visibles
+- Aucun écran vide
+
+----------------------------------------
+ETAPE 12 — TEST FINAL
+----------------------------------------
+Tester sur:
+- Expo Go
+- iOS
+- Android
+
+Vérifier:
+- Aucun crash
+- Navigation OK
+- UI cohérente
+- Aucun bouton cassé
+
+----------------------------------------
+SORTIE ATTENDUE
+----------------------------------------
+- UI homogène type Talabat
+- Code propre et maintenable
+- Zéro régression
+- Expérience utilisateur premium

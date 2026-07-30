@@ -1,0 +1,37 @@
+uploads = []
+
+[[generated]]
+id = "_G9HVGn2OT66Yz62LvAIq"
+uri = "file://artifacts/food-delivery/public/images/restaurant-1.png"
+type = "image"
+title = "Moroccan street food stall"
+
+[[generated]]
+id = "8tBlNWnf9MNKgvJe_wruH"
+uri = "file://artifacts/food-delivery/public/images/restaurant-2.png"
+type = "image"
+title = "Traditional tagine dish"
+
+[[generated]]
+id = "Md63YuiUs5YvDrB5xHYGE"
+uri = "file://artifacts/food-delivery/public/images/restaurant-3.png"
+type = "image"
+title = "Modern cafe in Morocco"
+
+[[generated]]
+id = "Io9bwrexWUREDMKC8htki"
+uri = "file://artifacts/jatek-mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "7yZ4vhPCXmNXRyskh6FmY"
+uri = "file://artifacts/jatek-mobile/assets/images/hero-bag.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "eKJHM_iCDfR0iUOPLpmKV"
+uri = "file://docs/stack-technique-et-couts.md"
+type = "text"
+title = "Stack Technique & Analyse des Coûts — Jatek"

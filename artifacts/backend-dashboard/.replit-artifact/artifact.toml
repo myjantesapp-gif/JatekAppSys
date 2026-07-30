@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/admin/"
+title = "Jatek Backend"
+version = "1.0.0"
+id = "artifacts/backend-dashboard"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/admin/" ]
+localPort = 19167
+
+[services.development]
+run = "pnpm --filter @workspace/backend-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/backend-dashboard", "run", "build" ]
+publicDir = "artifacts/backend-dashboard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19167"
+BASE_PATH = "/admin/"

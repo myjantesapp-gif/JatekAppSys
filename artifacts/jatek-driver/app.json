@@ -1,0 +1,90 @@
+{
+  "expo": {
+    "name": "Jatek Driver",
+    "slug": "jatek-driver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "jatek-driver",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ma.jatek.driver",
+      "infoPlist": {
+        "UIBackgroundModes": ["location", "fetch"],
+        "NSLocationWhenInUseUsageDescription": "Jatek Driver utilise votre position pour vous proposer les courses proches et guider la livraison.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Jatek Driver suit votre position pendant les courses, même en arrière-plan, pour informer le client en temps réel.",
+        "NSLocationAlwaysUsageDescription": "Jatek Driver suit votre position en arrière-plan pour mettre à jour les courses en cours.",
+        "NSCameraUsageDescription": "Jatek Driver utilise la caméra pour photographier les pièces justificatives et confirmer les livraisons."
+      }
+    },
+    "android": {
+      "package": "ma.jatek.driver",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#E91E8C"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "CAMERA",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Jatek Driver suit votre position en arrière-plan pendant les courses pour informer le client en temps réel.",
+          "locationAlwaysPermission": "Jatek Driver suit votre position en arrière-plan pendant les courses.",
+          "locationWhenInUsePermission": "Jatek Driver utilise votre position pour vous proposer les courses proches.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#E91E8C"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Jatek Driver utilise la caméra pour confirmer les livraisons."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "135003c2-4828-403d-8176-068364215286"
+      }
+    }
+  }
+}

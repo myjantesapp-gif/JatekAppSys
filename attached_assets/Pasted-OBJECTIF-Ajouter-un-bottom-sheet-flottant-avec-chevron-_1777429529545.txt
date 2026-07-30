@@ -1,0 +1,103 @@
+OBJECTIF :
+Ajouter un bottom sheet flottant avec chevron (style Talabat), affiché AU-DESSUS du Tab Navigator, SANS casser l’existant et SANS rework inutile.
+
+PRINCIPE OBLIGATOIRE :
+Toujours vérifier l’existant avant d’agir.
+Interdire toute recréation si un composant similaire existe déjà.
+
+---
+
+ÉTAPE 1 — AUDIT (OBLIGATOIRE AVANT TOUT)
+- Chercher dans le projet :
+  - bottom sheet existant
+  - modal
+  - composants avec position absolute bottom
+  - librairie type @gorhom/bottom-sheet
+- Si trouvé :
+  → NE PAS recréer
+  → Adapter uniquement
+
+---
+
+ÉTAPE 2 — DÉCISION
+
+CAS A : Un bottom sheet existe
+→ L’améliorer :
+  - Ajouter chevron (drag handle)
+  - Corriger styles pour flotter au-dessus du Tab Navigator
+  - Ajuster zIndex + elevation
+  - Corriger position (bottom: 70 ou dynamique selon tab bar)
+
+CAS B : Aucun composant existant
+→ Créer UN SEUL composant global FloatingSheet
+
+---
+
+ÉTAPE 3 — POSITIONNEMENT (CRUCIAL)
+
+Le composant DOIT être rendu au niveau ROOT :
+
+<NavigationContainer>
+  <View style={{ flex: 1 }}>
+    <TabNavigator />
+    <FloatingSheet />  // OU composant existant modifié
+  </View>
+</NavigationContainer>
+
+INTERDIT :
+- mettre dans un screen
+- dupliquer dans plusieurs écrans
+
+---
+
+ÉTAPE 4 — STYLE OBLIGATOIRE
+
+- position: 'absolute'
+- bottom: au-dessus de la tab bar (~70)
+- zIndex: 9999
+- elevation: 20 (Android)
+- borderTopRadius
+- shadow iOS
+
+Chevron obligatoire :
+- largeur 40
+- hauteur 5
+- centré
+
+---
+
+ÉTAPE 5 — TAB BAR
+
+Modifier UNIQUEMENT si nécessaire :
+
+tabBarStyle: {
+  position: 'absolute',
+  backgroundColor: 'transparent',
+  elevation: 0,
+  borderTopWidth: 0,
+}
+
+---
+
+ÉTAPE 6 — VALIDATION
+
+Tester :
+- visible au-dessus du menu
+- non coupé
+- fonctionne iOS + Android
+- aucun impact navigation
+- aucun écran cassé
+
+---
+
+RÈGLES STRICTES :
+- ZERO refactor global
+- ZERO suppression de logique existante
+- TOUJOURS modifier le minimum nécessaire
+- PRIORITÉ à l’existant
+- Code simple, lisible, maintenable
+
+---
+
+OBJECTIF FINAL :
+Bottom sheet flottant avec chevron, superposé au menu, comportement stable, aucune régression.

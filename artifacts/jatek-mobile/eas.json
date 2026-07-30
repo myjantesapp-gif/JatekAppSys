@@ -1,0 +1,51 @@
+{
+  "cli": {
+    "version": ">=14.7.1",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "credentialsSource": "remote",
+      "env": {
+        "EXPO_PUBLIC_PROJECT_ID": "24f32081-ec5b-4040-9694-24e08de7e7c7",
+        "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
+        "PNPM_VERSION": "10.26.1"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "credentialsSource": "remote",
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
+        "EXPO_PUBLIC_PROJECT_ID": "24f32081-ec5b-4040-9694-24e08de7e7c7",
+        "PNPM_VERSION": "10.26.1"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "credentialsSource": "remote",
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
+        "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
+        "EXPO_PUBLIC_PROJECT_ID": "24f32081-ec5b-4040-9694-24e08de7e7c7",
+        "PNPM_VERSION": "10.26.1"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
