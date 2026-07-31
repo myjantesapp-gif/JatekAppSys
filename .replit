@@ -71,7 +71,7 @@ externalPort = 5173
 
   [nix]
 channel = "stable-25_05"
-  packages = ["eas-cli", "unzipNLS"]
+packages = ["eas-cli", "unzipNLS", "gir-rs"]
 
   [userenv]
 
