@@ -61,7 +61,8 @@ export default function Deliverymen() {
       setCreating(false);
       setNewForm(emptyNew);
       if (result?.tempPassword) {
-        setCreatedCreds({ name: result.name ?? newForm.name, phone: result.phone ?? newForm.phone, tempPassword: result.tempPassword });
+        const d = result.driver ?? result;
+        setCreatedCreds({ name: d.name ?? newForm.name, phone: d.phone ?? newForm.phone, tempPassword: result.tempPassword });
       } else {
         toast({ title: "Livreur créé" });
       }

@@ -861,8 +861,10 @@ router.post("/backend/drivers", requireAuth, async (req: AuthedRequest, res): Pr
       licenseNumber: licenseNumber ?? null,
     }).returning();
 
-    // Return driver record + temporary password so admin can share it with the driver
-    res.status(201).json({ ...driver, tempPassword });
+    // Return driver record + temporary password so admin can share it with the driver.
+    // tempPassword is intentionally separated from the driver object so it is not
+    // accidentally spread, logged, or forwarded as part of the driver record.
+    res.status(201).json({ driver, tempPassword });
   } catch (e: any) {
     if (e.code === "23505") { res.status(409).json({ error: "Un compte avec ces informations existe déjà" }); return; }
     throw e;
