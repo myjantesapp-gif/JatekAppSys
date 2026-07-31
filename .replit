@@ -11,6 +11,28 @@ build = ["bash", "scripts/build-production.sh"]
   env = { "CI" = "true" }
 
   [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/jatek-mobile: web"
+
+[[workflows.workflow]]
+name = "artifacts/jatek-mobile: web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/jatek-mobile run serve"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "console"
 
   [agent]
   stack = "BEST_EFFORT_FALLBACK"
