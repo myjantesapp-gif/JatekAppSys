@@ -9,9 +9,11 @@
       "distribution": "internal",
       "credentialsSource": "remote",
       "env": {
-        "EXPO_PUBLIC_PROJECT_ID": "24f32081-ec5b-4040-9694-24e08de7e7c7",
+        "EXPO_PUBLIC_PROJECT_ID": "11e89fef-b97e-4823-ba4a-07c2942ba6b0",
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
-        "PNPM_VERSION": "10.26.1"
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_OWNER": "myjantesapps-team",
+        "EXPO_SLUG": "jatekclient"
       },
       "android": {
         "buildType": "apk",
@@ -24,8 +26,10 @@
       "credentialsSource": "remote",
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "24f32081-ec5b-4040-9694-24e08de7e7c7",
-        "PNPM_VERSION": "10.26.1"
+        "EXPO_PUBLIC_PROJECT_ID": "11e89fef-b97e-4823-ba4a-07c2942ba6b0",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_OWNER": "myjantesapps-team",
+        "EXPO_SLUG": "jatekclient"
       },
       "android": {
         "buildType": "apk"
@@ -37,8 +41,10 @@
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "24f32081-ec5b-4040-9694-24e08de7e7c7",
-        "PNPM_VERSION": "10.26.1"
+        "EXPO_PUBLIC_PROJECT_ID": "11e89fef-b97e-4823-ba4a-07c2942ba6b0",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_OWNER": "myjantesapps-team",
+        "EXPO_SLUG": "jatekclient"
       },
       "android": {
         "buildType": "app-bundle"
