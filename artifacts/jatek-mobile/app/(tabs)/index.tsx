@@ -61,15 +61,6 @@ const CARD_BORDER = "#F0F0F0";
 // Shop categories (3×2 grid below the header)
 const CAT_TINT = "#F2EDD0"; // light yellow-olive — shared tile background
 
-const SHOP_CATEGORIES = [
-  { slug: "restauration", label: "Restauration", icon: "restaurant"  as const, accent: "#B85C00" },
-  { slug: "epicerie",     label: "Épicerie",     icon: "basket"      as const, accent: "#2E7D32" },
-  { slug: "sante",        label: "Santé",        icon: "medkit"      as const, accent: "#C62828" },
-  { slug: "supermarche",  label: "Supermarché",  icon: "cart"        as const, accent: "#E65100" },
-  { slug: "boutiques",    label: "Boutiques",    icon: "storefront"  as const, accent: "#880E4F" },
-  { slug: "coursier",     label: "Coursier",     icon: "bicycle"     as const, accent: "#1A237E" },
-];
-
 // Service squares (Service Coursier / Boutiques / Offers / Parapharm)
 const SERVICES = [
   { key: "courier",  label: "Service Coursier", bg: "#D7F6FA", icon: "bicycle"   as const, color: "#0AA5C0", businessType: "services",     categorySlug: "coursier" },
@@ -274,13 +265,12 @@ export default function HomeScreen() {
 
   const { data: restaurants, isLoading } = useListRestaurants(params);
   const { data: featuredPartners } = useGetFeaturedRestaurants();
-  const { data: apiCategories } = useListCategories();
+  const { data: apiCategories, isLoading: categoriesLoading } = useListCategories();
 
-  // Categories managed from the admin dashboard — fall back to the static list
-  // while loading or if the API returns nothing.
+  // Categories are 100% managed from the admin dashboard (ma.jatek.app/admin).
+  // No hardcoded fallback: while loading we show a spinner, if empty a message.
   const shopCategories = useMemo(() => {
     const parents = (apiCategories ?? []).filter((c: any) => !c.parentId && c.isActive !== false);
-    if (parents.length === 0) return SHOP_CATEGORIES;
     return parents.map((c: any) => ({
       slug: c.slug,
       label: c.name,
@@ -397,6 +387,16 @@ export default function HomeScreen() {
 
         {/* ─── Shop categories horizontal slider ─── */}
         <Animated.Text entering={FadeInDown.delay(80).duration(450).springify()} style={s.sliderSectionTitle}>Explorer</Animated.Text>
+        {categoriesLoading && shopCategories.length === 0 && (
+          <View style={{ paddingVertical: 24, alignItems: "center" }}>
+            <ActivityIndicator size="small" color={PINK} />
+          </View>
+        )}
+        {!categoriesLoading && shopCategories.length === 0 && (
+          <Text style={{ paddingHorizontal: 16, paddingVertical: 16, color: TEXT_MUTED, fontSize: 13 }}>
+            Aucune catégorie disponible pour le moment.
+          </Text>
+        )}
         <Animated.ScrollView
           entering={FadeInDown.delay(140).duration(500).springify()}
           horizontal

@@ -58,90 +58,16 @@ type SlugConfig = {
   subcategories: SubcatConfig[];
 };
 
-const SLUG_CONFIG: Record<string, SlugConfig> = {
-  restauration: {
-    label: "Restauration",
-    color: "#E91E63",
-    bannerImage: require("../../assets/images/cat-restauration.jpg"),
-    businessType: "restaurant",
-    subcategories: [
-      { id: "all",        label: "Tout",       icon: "grid" },
-      { id: "Pizza",      label: "Pizza",       icon: "pizza",        apiCategory: "Pizza" },
-      { id: "Burgers",    label: "Burgers",     icon: "fast-food",    apiCategory: "Burgers" },
-      { id: "Sandwiches", label: "Sandwichs",   icon: "nutrition",    apiCategory: "Sandwiches" },
-      { id: "Moroccan",   label: "Marocain",    icon: "leaf",         apiCategory: "Moroccan" },
-      { id: "Chicken",    label: "Poulet",      icon: "restaurant",   apiCategory: "Chicken" },
-      { id: "Sushi",      label: "Sushi",       icon: "fish",         apiCategory: "Sushi" },
-    ],
-  },
-  epicerie: {
-    label: "Épicerie",
-    color: "#F97316",
-    bannerImage: require("../../assets/images/cat-epicerie.jpg"),
-    businessType: "shop",
-    subcategories: [
-      { id: "all",      label: "Tout",                icon: "grid" },
-      { id: "fruits",   label: "Fruits & Légumes",    icon: "leaf",      apiCategory: "Fruits & Légumes" },
-      { id: "bakery",   label: "Boulangerie",         icon: "cafe",      apiCategory: "Boulangerie" },
-      { id: "drinks",   label: "Boissons",            icon: "wine",      apiCategory: "Boissons" },
-      { id: "dairy",    label: "Produits Laitiers",   icon: "nutrition", apiCategory: "Laitiers" },
-      { id: "spices",   label: "Épices & Condiments", icon: "flask",     apiCategory: "Épices" },
-    ],
-  },
-  sante: {
-    label: "Santé",
-    color: "#8B5CF6",
-    bannerImage: require("../../assets/images/cat-sante.jpg"),
-    businessType: "pharmacy",
-    subcategories: [
-      { id: "all",         label: "Tout",          icon: "grid" },
-      { id: "pharmacy",    label: "Pharmacie",     icon: "medkit",   apiCategory: "Pharmacie" },
-      { id: "parapharma",  label: "Parapharmacie", icon: "heart",    apiCategory: "Parapharmacie" },
-      { id: "wellness",    label: "Bien-être",     icon: "fitness",  apiCategory: "Bien-être" },
-      { id: "optics",      label: "Optique",       icon: "eye",      apiCategory: "Optique" },
-      { id: "supplements", label: "Compléments",   icon: "flask",    apiCategory: "Compléments" },
-    ],
-  },
-  supermarche: {
-    label: "Supermarché",
-    color: "#0AA5C0",
-    bannerImage: require("../../assets/images/cat-supermarche.jpg"),
-    businessType: "shop",
-    subcategories: [
-      { id: "all",       label: "Tout",              icon: "grid" },
-      { id: "food",      label: "Alimentation",      icon: "basket",   apiCategory: "Alimentation" },
-      { id: "frozen",    label: "Surgelés",          icon: "snow",     apiCategory: "Surgelés" },
-      { id: "hygiene",   label: "Hygiène & Beauté",  icon: "rose",     apiCategory: "Hygiène" },
-      { id: "cleaning",  label: "Produits Ménagers", icon: "sparkles", apiCategory: "Ménagers" },
-      { id: "beverages", label: "Boissons",          icon: "wine",     apiCategory: "Boissons" },
-    ],
-  },
-  boutiques: {
-    label: "Boutiques",
-    color: "#C2185B",
-    bannerImage: require("../../assets/images/cat-boutiques.jpg"),
-    businessType: "shop",
-    subcategories: [
-      { id: "all",         label: "Tout",          icon: "grid" },
-      { id: "fashion",     label: "Mode",          icon: "shirt",         apiCategory: "Mode" },
-      { id: "cosmetics",   label: "Cosmétiques",   icon: "sparkles",      apiCategory: "Cosmétiques" },
-      { id: "home",        label: "Maison & Déco", icon: "home",          apiCategory: "Maison" },
-      { id: "gifts",       label: "Cadeaux",       icon: "gift",          apiCategory: "Cadeaux" },
-      { id: "electronics", label: "Électronique",  icon: "hardware-chip", apiCategory: "Électronique" },
-    ],
-  },
-  coursier: {
-    label: "Coursier",
-    color: "#3A7D1B",
-    bannerImage: require("../../assets/images/cat-coursier.jpg"),
-    businessType: "courier",
-    subcategories: [
-      { id: "all",      label: "Tout",              icon: "grid" },
-      { id: "express",  label: "Livraison Express", icon: "flash",  apiCategory: "Express" },
-      { id: "errands",  label: "Courses à faire",   icon: "list",   apiCategory: "Courses" },
-      { id: "parcel",   label: "Envoi de Colis",    icon: "cube",   apiCategory: "Colis" },
-    ],
-  },
+// Banner images are the only local (visual-only) asset kept per slug.
+// All category data (label, color, businessType, subcategories) comes from
+// the backend — managed via ma.jatek.app/admin.
+const BANNER_IMAGES: Record<string, any> = {
+  restauration: require("../../assets/images/cat-restauration.jpg"),
+  epicerie: require("../../assets/images/cat-epicerie.jpg"),
+  sante: require("../../assets/images/cat-sante.jpg"),
+  supermarche: require("../../assets/images/cat-supermarche.jpg"),
+  boutiques: require("../../assets/images/cat-boutiques.jpg"),
+  coursier: require("../../assets/images/cat-coursier.jpg"),
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -282,50 +208,65 @@ export default function CategoryScreen() {
     setActiveSubId("all");
   }, [slug]);
 
-  const staticConfig = SLUG_CONFIG[slug ?? ""] ?? {
-    label: slug ?? "Catégorie",
-    color: PINK,
-    bannerImage: null,
-    businessType: "restaurant",
-    subcategories: [{ id: "all", label: "Tout", icon: "grid" }],
-  };
-
-  // Categories managed from the admin dashboard — override static config when available.
-  const { data: apiCategories } = useListCategories();
-  const config = useMemo(() => {
-    const parent = (apiCategories ?? []).find((c: any) => c.slug === slug && !c.parentId);
-    if (!parent) return staticConfig;
-    const children = (apiCategories ?? []).filter(
-      (c: any) => c.parentId === parent.id && c.isActive !== false,
+  // Categories are 100% managed from the admin dashboard (ma.jatek.app/admin).
+  // The API returns parents with their subCategories nested.
+  const { data: apiCategories, isLoading: categoriesLoading } = useListCategories();
+  const parent = useMemo(
+    () =>
+      (apiCategories ?? []).find(
+        (c: any) => c.slug === slug && !c.parentId && c.isActive !== false,
+      ) as any,
+    [apiCategories, slug],
+  );
+  const config = useMemo<SlugConfig>(() => {
+    if (!parent) {
+      return {
+        label: slug ?? "Catégorie",
+        color: PINK,
+        bannerImage: BANNER_IMAGES[slug ?? ""] ?? null,
+        businessType: "",
+        subcategories: [{ id: "all", label: "Tout", icon: "grid" }],
+      };
+    }
+    // Children may arrive nested (subCategories) or flat (parentId) depending
+    // on the endpoint shape — support both.
+    const nested = (parent.subCategories ?? []) as any[];
+    const flat = (apiCategories ?? []).filter((c: any) => c.parentId === parent.id);
+    const children = (nested.length > 0 ? nested : flat).filter(
+      (c: any) => c.isActive !== false,
     );
     return {
-      ...staticConfig,
-      label: parent.name || staticConfig.label,
-      color: parent.accentColor || staticConfig.color,
-      businessType: (parent as any).businessType || staticConfig.businessType,
-      subcategories:
-        children.length > 0
-          ? [
-              { id: "all", label: "Tout", icon: "grid" },
-              ...children.map((c: any) => ({
-                id: String(c.id),
-                label: c.name,
-                icon: c.icon || "grid",
-                apiCategory: c.name,
-              })),
-            ]
-          : staticConfig.subcategories,
+      label: parent.name,
+      color: parent.accentColor || PINK,
+      bannerImage: BANNER_IMAGES[slug ?? ""] ?? null,
+      businessType: parent.businessType || "restaurant",
+      subcategories: [
+        { id: "all", label: "Tout", icon: "grid" },
+        ...children.map((c: any) => ({
+          id: String(c.id),
+          label: c.name,
+          icon: c.icon || "grid",
+          apiCategory: c.name,
+        })),
+      ],
     };
-  }, [apiCategories, slug, staticConfig]);
+  }, [apiCategories, slug, parent]);
 
   const activeSub = config.subcategories.find((s) => s.id === activeSubId) ?? config.subcategories[0];
   const apiCategory = activeSub.id === "all" ? undefined : activeSub.apiCategory;
 
-  const { data: restaurants, isLoading } = useListRestaurants({
-    businessType: config.businessType,
-    category: apiCategory,
-    search: search.trim() || undefined,
-  });
+  // Only query restaurants once the backend category is resolved — never with
+  // a guessed/fallback business type.
+  const categoryResolved = !!parent;
+  const { data: restaurants, isLoading: restaurantsLoading } = useListRestaurants(
+    {
+      businessType: config.businessType,
+      category: apiCategory,
+      search: search.trim() || undefined,
+    },
+    { query: { enabled: categoryResolved } as any },
+  );
+  const isLoading = categoriesLoading || (categoryResolved && restaurantsLoading);
 
   const filtered = useMemo(() => {
     if (!restaurants) return [];
@@ -467,7 +408,21 @@ export default function CategoryScreen() {
           </Animated.View>
         )}
         ListEmptyComponent={
-          !isLoading ? <EmptyCategorySection color={config.color} label={config.label} /> : null
+          !isLoading ? (
+            categoryResolved ? (
+              <EmptyCategorySection color={config.color} label={config.label} />
+            ) : (
+              <View style={styles.emptyWrap}>
+                <View style={[styles.emptyIcon, { backgroundColor: PINK + "1A" }]}>
+                  <Ionicons name="alert-circle-outline" size={42} color={PINK} />
+                </View>
+                <Text style={styles.emptyTitle}>Catégorie indisponible</Text>
+                <Text style={styles.emptySub}>
+                  Cette catégorie n'existe pas ou n'est plus active. Retournez à l'accueil pour voir les catégories disponibles.
+                </Text>
+              </View>
+            )
+          ) : null
         }
       />
     </View>
