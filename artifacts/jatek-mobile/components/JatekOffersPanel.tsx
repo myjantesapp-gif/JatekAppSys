@@ -440,12 +440,13 @@ export function JatekOffersPanel({ tabBarHeight }: Props) {
           >
             <View style={st.drop}>
               <View style={st.dropInner}>
-                <Ionicons name="pricetag" size={20} color="#fff" />
+                <Text style={st.dropTxt} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  Offres
+                </Text>
               </View>
             </View>
           </TouchableOpacity>
         </Animated.View>
-        <Text style={st.dropLabel} numberOfLines={1}>Offres</Text>
       </View>
     </View>
   );
@@ -473,35 +474,37 @@ const st = StyleSheet.create({
     backgroundColor: "#fff",
     paddingBottom: 16,
   },
+  // Positioned so the drop sits exactly above the chatbot FAB (52px FAB,
+  // right: 18, bottom: tab bar + 16) and is horizontally centered with it.
   dropZone: {
-    alignSelf: "flex-start",
+    alignSelf: "flex-end",
     alignItems: "center",
-    marginLeft: 14,
-    marginTop: 14,
-    marginBottom: 8,
-    width: 64,
+    marginRight: 15,
+    marginTop: 10,
+    marginBottom: 16 + 52 + 10,
+    width: 58,
   },
   ripple: {
     position: "absolute",
     top: -2,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     borderWidth: 2,
-    borderColor: PINK,
+    borderColor: TURQUOISE,
   },
   drop: {
-    width: 54,
-    height: 54,
-    backgroundColor: PINK,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 27,
-    borderBottomLeftRadius: 27,
-    borderBottomRightRadius: 27,
+    width: 58,
+    height: 58,
+    backgroundColor: TURQUOISE,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 29,
+    borderBottomLeftRadius: 29,
+    borderBottomRightRadius: 29,
     transform: [{ rotate: "45deg" }],
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: PINK,
+    shadowColor: TURQUOISE,
     shadowOpacity: 0.45,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -511,13 +514,14 @@ const st = StyleSheet.create({
     transform: [{ rotate: "-45deg" }],
     alignItems: "center",
     justifyContent: "center",
+    width: 48,
   },
-  dropLabel: {
-    marginTop: 4,
-    fontSize: 11,
+  dropTxt: {
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
-    color: PINK,
+    color: "#fff",
     letterSpacing: 0.2,
+    textAlign: "center",
   },
   titleRow: {
     flexDirection: "row",
