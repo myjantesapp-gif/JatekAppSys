@@ -66,10 +66,10 @@ export default function CookieConsentBanner() {
         </Text>
         <View style={styles.btnRow}>
           <TouchableOpacity style={[styles.btn, { backgroundColor: colors.muted }]} onPress={() => close("essential")}>
-            <Text style={[styles.btnText, { color: colors.heading }]}>Refuser</Text>
+            <Text style={[styles.btnText, { color: colors.heading }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>Refuser</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={() => close("all")}>
-            <Text style={[styles.btnText, { color: "#fff" }]}>Tout accepter</Text>
+            <Text style={[styles.btnText, { color: "#fff" }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>Tout accepter</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -83,6 +83,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 15, fontFamily: "Inter_700Bold" },
   body: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   btnRow: { flexDirection: "row", gap: 8, marginTop: 4 },
-  btn: { flex: 1, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  btn: { flex: 1, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", paddingHorizontal: 10 },
   btnText: { fontSize: 13, fontFamily: "Inter_700Bold" },
 });

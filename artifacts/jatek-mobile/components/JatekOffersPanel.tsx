@@ -35,14 +35,17 @@ const ADS: ReadonlyArray<{
 
 const AUTO_MS = 4000;
 
-const CARD_W = 110;
-const CARD_H = 150;
+// Responsive sizing — cards and fan spread scale with screen width so the
+// 4-card fan always fits, even on small devices.
+const CARD_W = Math.min(110, Math.floor(SCREEN_W * 0.27));
+const CARD_H = Math.round(CARD_W * 1.36);
+const FAN_UNIT = Math.min(78, Math.floor(SCREEN_W * 0.19));
 
 const FAN = [
-  { dx: -78, rot: -14 },
-  { dx: -26, rot: -5 },
-  { dx:  26, rot:  5 },
-  { dx:  78, rot: 14 },
+  { dx: -FAN_UNIT, rot: -14 },
+  { dx: -Math.round(FAN_UNIT / 3), rot: -5 },
+  { dx:  Math.round(FAN_UNIT / 3), rot:  5 },
+  { dx:  FAN_UNIT, rot: 14 },
 ];
 
 const SCATTER = [
@@ -52,17 +55,19 @@ const SCATTER = [
   { dx:  SCREEN_W * 0.6, dy:  160, rot: -50 },
 ];
 
+// Sparkle positions scale with screen width and stay inside the fan area so
+// they never overlap the title/subtitle text or bleed off-screen.
+const SPX = Math.min(1, SCREEN_W / 400);
 const SPARKLES: Array<{ x: number; y: number; size: number; color: string; icon: "star" | "sparkles" }> = [
-  { x:  -130, y:  10, size: 18, color: TURQUOISE,      icon: "star" },
-  { x:  -150, y:  90, size: 12, color: NAVY,           icon: "star" },
-  { x:   135, y:   0, size: 18, color: TURQUOISE,      icon: "star" },
-  { x:   155, y:  85, size: 12, color: NAVY,           icon: "star" },
-  { x:  -100, y: -55, size: 14, color: TURQUOISE_DEEP, icon: "sparkles" },
-  { x:   105, y: -50, size: 14, color: TURQUOISE_DEEP, icon: "sparkles" },
+  { x:  -130 * SPX, y:  10, size: 18, color: TURQUOISE,      icon: "star" },
+  { x:  -150 * SPX, y:  90, size: 12, color: NAVY,           icon: "star" },
+  { x:   135 * SPX, y:   0, size: 18, color: TURQUOISE,      icon: "star" },
+  { x:   155 * SPX, y:  85, size: 12, color: NAVY,           icon: "star" },
+  { x:  -105 * SPX, y:  -8, size: 14, color: TURQUOISE_DEEP, icon: "sparkles" },
+  { x:   108 * SPX, y:  -6, size: 14, color: TURQUOISE_DEEP, icon: "sparkles" },
 ];
 
-const BAR_H = 36;
-const PANEL_H = Math.min(490, Math.floor(SCREEN_H * 0.65));
+const PANEL_H = Math.min(460, Math.floor(SCREEN_H * 0.6));
 
 interface Props {
   tabBarHeight: number;
@@ -342,24 +347,26 @@ export function JatekOffersPanel({ tabBarHeight }: Props) {
               style={st.cta}
               onPress={() => openOffer(ADS[activeIdx].key)}
             >
-              <Text style={st.ctaTxt}>Découvrir les offres</Text>
+              <Text style={st.ctaTxt} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                Découvrir les offres
+              </Text>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
       </Animated.View>
 
-      {/* Always-visible bar */}
+      {/* Compact floating pill — bottom-left, doesn't cover content */}
       <TouchableOpacity
         onPress={toggle}
         activeOpacity={0.85}
-        style={st.bar}
+        style={st.pill}
+        accessibilityRole="button"
+        accessibilityLabel={open ? "Fermer les offres Jatek" : "Voir les offres Jatek"}
       >
-        <View style={st.barLeft}>
-          <Ionicons name="pricetag" size={13} color={PINK} style={{ marginRight: 6 }} />
-          <Text style={st.barLabel} numberOfLines={1}>Offres Jatek</Text>
-        </View>
-        <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-          <Ionicons name="chevron-up" size={16} color={PINK} />
+        <Ionicons name="pricetag" size={14} color={PINK} style={{ marginRight: 6 }} />
+        <Text style={st.barLabel} numberOfLines={1}>Offres</Text>
+        <Animated.View style={{ transform: [{ rotate: chevronRotate }], marginLeft: 6 }}>
+          <Ionicons name="chevron-up" size={15} color={PINK} />
         </Animated.View>
       </TouchableOpacity>
     </View>
@@ -388,19 +395,24 @@ const st = StyleSheet.create({
     backgroundColor: "#fff",
     paddingBottom: 16,
   },
-  bar: {
-    height: BAR_H,
+  pill: {
+    alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 18,
+    marginLeft: 12,
+    marginTop: 8,
+    marginBottom: 10,
+    height: 38,
+    paddingHorizontal: 14,
+    borderRadius: 999,
     backgroundColor: "#FFF5F8",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "rgba(233, 30, 99, 0.22)",
-  },
-  barLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(233, 30, 99, 0.3)",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
   },
   barLabel: {
     fontSize: 13,

@@ -322,7 +322,7 @@ export default function HomeScreen() {
     <View style={s.root}>
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={{ paddingBottom: tabBarPad + 24 }}
+        contentContainerStyle={{ paddingBottom: tabBarPad + 72 }}
         showsVerticalScrollIndicator={false}
       >
         {/* ─── Pink header with wavy bottom edge ─── */}
