@@ -9,6 +9,9 @@
       "developmentClient": true,
       "distribution": "internal",
       "autoIncrement": true,
+      "env": {
+        "PNPM_VERSION": "10.26.1"
+      },
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleDebug"
@@ -21,7 +24,8 @@
       "credentialsSource": "remote",
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "2437ecfc-9682-4b07-9eaa-77f6206b4714"
+        "EXPO_PUBLIC_PROJECT_ID": "2437ecfc-9682-4b07-9eaa-77f6206b4714",
+        "PNPM_VERSION": "10.26.1"
       },
       "android": {
         "buildType": "apk"
@@ -33,7 +37,8 @@
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "2437ecfc-9682-4b07-9eaa-77f6206b4714"
+        "EXPO_PUBLIC_PROJECT_ID": "2437ecfc-9682-4b07-9eaa-77f6206b4714",
+        "PNPM_VERSION": "10.26.1"
       },
       "android": {
         "buildType": "app-bundle"
