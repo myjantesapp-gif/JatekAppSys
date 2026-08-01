@@ -7,7 +7,11 @@ description: EAS build quirks for the jatek-mobile pnpm monorepo workspace — c
 
 1. **Use `app.config.js`, not `app.config.ts`** — EAS CLI reads the config via its own transpiler, which fails on TypeScript with `Cannot read properties of undefined (reading 'CommonJS')`. The plain JS version works reliably.
 
-2. **Set `PNPM_VERSION: "10.0.0"` in every EAS build profile env** — EAS Cloud defaults to an older pnpm that doesn't understand `catalog:` specifiers used in the workspace's `pnpm-workspace.yaml`. Without this, installs fail.
+2. **Pin pnpm 10+ for EAS** — root `package.json` must have `"packageManager": "pnpm@10.x"` (EAS reads it) AND `PNPM_VERSION` in every build profile env of BOTH eas.json files (repo root + artifacts/jatek-mobile). EAS Cloud's default pnpm can't parse `catalog:` specifiers → `pnpm install --frozen-lockfile` fails.
+
+2b. **Two eas.json files exist** — a repo-root `eas.json` (with `cli.appRoot: artifacts/jatek-mobile`) used by expo.dev GitHub-triggered builds, and `artifacts/jatek-mobile/eas.json` used by local CLI builds. Keep them in sync.
+
+2c. **EAS project = `@myjantesapps-team/jatekclient`** (ID `11e89fef-b97e-4823-ba4a-07c2942ba6b0`). The EXPO_TOKEN is a robot on `myjantesapps-team` and cannot access older project IDs (`24f32081…`, `2437ecfc…`). `app.config.js` resolves owner/slug/projectId from `EXPO_OWNER`/`EXPO_SLUG`/`EXPO_PUBLIC_PROJECT_ID` — set them in eas.json profile envs; for CLI commands outside a build profile (e.g. `build:view`), export them in the shell too.
 
 3. **EAS CLI is local to jatek-mobile** — run as `node_modules/.bin/eas` from `artifacts/jatek-mobile/`. Not globally installed. Command: `EXPO_TOKEN=$EXPO_TOKEN node_modules/.bin/eas build --profile <profile> --platform android --non-interactive --no-wait`.
 
