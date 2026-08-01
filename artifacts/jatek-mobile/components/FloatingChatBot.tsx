@@ -379,7 +379,7 @@ function makeStyles(colors: ReturnType<typeof import("@/hooks/useColors").useCol
     fab: {
       position: "absolute",
       bottom: FAB_BOTTOM,
-      right: FAB_RIGHT,
+      left: FAB_RIGHT,
       width: FAB_SIZE,
       height: FAB_SIZE,
       borderRadius: FAB_SIZE / 2,

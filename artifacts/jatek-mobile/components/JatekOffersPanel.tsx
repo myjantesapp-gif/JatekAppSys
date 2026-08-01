@@ -474,14 +474,13 @@ const st = StyleSheet.create({
     backgroundColor: "#fff",
     paddingBottom: 16,
   },
-  // Positioned so the drop sits exactly above the chatbot FAB (52px FAB,
-  // right: 18, bottom: tab bar + 16) and is horizontally centered with it.
+  // Bottom-right corner (chatbot FAB now lives on the opposite, left side).
   dropZone: {
     alignSelf: "flex-end",
     alignItems: "center",
     marginRight: 15,
     marginTop: 10,
-    marginBottom: 16 + 52 + 10,
+    marginBottom: 16,
     width: 58,
   },
   ripple: {
