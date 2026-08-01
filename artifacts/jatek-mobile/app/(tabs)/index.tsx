@@ -61,15 +61,6 @@ const CARD_BORDER = "#F0F0F0";
 // Shop categories (3×2 grid below the header)
 const CAT_TINT = "#F2EDD0"; // light yellow-olive — shared tile background
 
-// Service squares (Service Coursier / Boutiques / Offers / Parapharm)
-const SERVICES = [
-  { key: "courier",  label: "Service Coursier", bg: "#D7F6FA", icon: "bicycle"   as const, color: "#0AA5C0", businessType: "services",     categorySlug: "coursier" },
-  { key: "shops",    label: "Boutiques",        bg: "#FFC9D8", icon: "storefront" as const, color: "#C2185B", businessType: "shop",          categorySlug: "boutiques" },
-  { key: "offers",   label: "Offers",           bg: "#A8F08A", icon: "pricetag"  as const, color: "#3A7D1B", businessType: "restaurant",    categorySlug: null, isOpen: true },
-  { key: "pharm",    label: "Parapharm",        bg: "#E5A3F0", icon: "medkit"    as const, color: "#7A2A8C", businessType: "parapharmacy",  categorySlug: "sante" },
-];
-
-
 // Default fallback image used when a restaurant has no imageUrl.
 // Picsum food-style placeholder (always reachable, no auth needed).
 const FALLBACK_FOOD =
@@ -249,6 +240,14 @@ export default function HomeScreen() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [activeBusinessType, setActiveBusinessType] = useState("restaurant");
   const [activeLabel, setActiveLabel] = useState("Tous les Restaurants");
+
+  // Derive restaurant category slug dynamically from API so we never hardcode "restauration".
+  const restaurantCategorySlug = useMemo(() => {
+    const cat = (apiCategories ?? []).find(
+      (c: any) => !c.parentId && c.isActive !== false && c.businessType === "restaurant",
+    ) as any;
+    return cat?.slug ?? null;
+  }, [apiCategories]);
   const [onlyOpen, setOnlyOpen] = useState<boolean | undefined>(undefined);
   const [addressPickerOpen, setAddressPickerOpen] = useState(false);
   const [shortsVisible, setShortsVisible] = useState(false);
@@ -294,17 +293,6 @@ export default function HomeScreen() {
     setActiveCat(null);
     setOnlyOpen(undefined);
     setActiveLabel("Tous les Restaurants");
-  };
-
-  const applyService = (sv: typeof SERVICES[number]) => {
-    if (sv.categorySlug) {
-      router.push({ pathname: "/category/[slug]", params: { slug: sv.categorySlug } });
-      return;
-    }
-    setActiveBusinessType(sv.businessType);
-    setActiveCat(null);
-    setOnlyOpen(sv.isOpen);
-    setActiveLabel(sv.label);
   };
 
   const openShort = (index: number) => {
@@ -499,7 +487,10 @@ export default function HomeScreen() {
         <Animated.View entering={FadeInDown.delay(560).duration(500).springify()}>
           <SectionHeader
             title="Près de chez vous"
-            onMore={() => router.push({ pathname: "/category/[slug]", params: { slug: "restauration" } })}
+            onMore={() => restaurantCategorySlug
+              ? router.push({ pathname: "/category/[slug]", params: { slug: restaurantCategorySlug } })
+              : undefined
+            }
           />
         </Animated.View>
         {isLoading ? (

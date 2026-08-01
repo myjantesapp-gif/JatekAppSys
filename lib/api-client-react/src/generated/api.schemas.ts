@@ -911,6 +911,8 @@ export interface Category {
   /** @nullable */
   parentId?: number | null;
   businessType: string;
+  /** @nullable */
+  bannerImageUrl?: string | null;
   isActive: boolean;
   sortOrder: number;
   createdAt?: string;
@@ -926,6 +928,8 @@ export interface CategoryWithSubs {
   /** @nullable */
   parentId?: number | null;
   businessType: string;
+  /** @nullable */
+  bannerImageUrl?: string | null;
   isActive: boolean;
   sortOrder: number;
   subCategories?: Category[];
@@ -941,6 +945,8 @@ export interface CategoryBody {
   /** @nullable */
   parentId?: number | null;
   businessType?: string;
+  /** @nullable */
+  bannerImageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
 }

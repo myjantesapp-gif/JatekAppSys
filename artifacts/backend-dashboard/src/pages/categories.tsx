@@ -42,7 +42,7 @@ const BUSINESS_TYPES = [
   { value: "services",   label: "Services / Coursier" },
 ];
 
-const EMPTY = { name: "", icon: "storefront", accentColor: "#E91E63", sortOrder: "0", isActive: true, businessType: "restaurant" };
+const EMPTY = { name: "", icon: "storefront", accentColor: "#E91E63", sortOrder: "0", isActive: true, businessType: "restaurant", bannerImageUrl: "" };
 
 function CategoryForm({
   value, onChange, isSubcat = false,
@@ -95,6 +95,16 @@ function CategoryForm({
           <Input value={value.accentColor} onChange={set("accentColor")} placeholder="#E91E63" className="flex-1" />
         </div>
       </div>
+      {!isSubcat && (
+        <div className="space-y-1">
+          <Label className="text-xs">Image de bannière (URL)</Label>
+          <Input
+            value={value.bannerImageUrl}
+            onChange={set("bannerImageUrl")}
+            placeholder="https://… (image affichée en fond de la page catégorie)"
+          />
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <Switch
           checked={value.isActive}
@@ -142,6 +152,7 @@ export default function Categories() {
           sortOrder: Number(createForm.sortOrder) || 0,
           isActive: createForm.isActive,
           businessType: createForm.businessType || "restaurant",
+          bannerImageUrl: createForm.bannerImageUrl?.trim() || null,
           parentId: parentId ?? null,
         }),
       }),
@@ -166,6 +177,7 @@ export default function Categories() {
           sortOrder: Number(editForm.sortOrder) || 0,
           isActive: editForm.isActive,
           businessType: editForm.businessType || "restaurant",
+          bannerImageUrl: editForm.bannerImageUrl?.trim() || null,
         }),
       }),
     onSuccess: () => { invalidate(); setEditing(null); toast({ title: "Catégorie modifiée" }); },
@@ -193,6 +205,7 @@ export default function Categories() {
       sortOrder: String(cat.sortOrder),
       isActive: cat.isActive,
       businessType: (cat as any).businessType ?? "restaurant",
+      bannerImageUrl: (cat as any).bannerImageUrl ?? "",
     });
     setEditing(cat);
   };

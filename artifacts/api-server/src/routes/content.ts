@@ -93,7 +93,7 @@ router.get("/backend/categories/all", requireAuth, async (req: AuthedRequest, re
 
 router.post("/backend/categories", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
   if (!await requireAdmin(req, res)) return;
-  const { name, slug, icon, accentColor, parentId, businessType, isActive, sortOrder } = req.body ?? {};
+  const { name, slug, icon, accentColor, parentId, businessType, bannerImageUrl, isActive, sortOrder } = req.body ?? {};
   if (!name || !slug) { res.status(400).json({ error: "name and slug required" }); return; }
   const [row] = await db.insert(categoriesTable).values({
     name,
@@ -102,6 +102,7 @@ router.post("/backend/categories", requireAuth, async (req: AuthedRequest, res):
     accentColor: accentColor ?? "#E91E63",
     parentId: parentId ?? null,
     businessType: businessType ?? "restaurant",
+    bannerImageUrl: bannerImageUrl ?? null,
     isActive: isActive !== false,
     sortOrder: sortOrder ?? 0,
   }).returning();
@@ -111,7 +112,7 @@ router.post("/backend/categories", requireAuth, async (req: AuthedRequest, res):
 router.patch("/backend/categories/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
   if (!await requireAdmin(req, res)) return;
   const id = Number(req.params.id);
-  const { name, slug, icon, accentColor, parentId, businessType, isActive, sortOrder } = req.body ?? {};
+  const { name, slug, icon, accentColor, parentId, businessType, bannerImageUrl, isActive, sortOrder } = req.body ?? {};
   const updates: Record<string, any> = {};
   if (name !== undefined) updates.name = name;
   if (slug !== undefined) updates.slug = String(slug).toLowerCase().replace(/\s+/g, "-");
@@ -119,6 +120,7 @@ router.patch("/backend/categories/:id", requireAuth, async (req: AuthedRequest, 
   if (accentColor !== undefined) updates.accentColor = accentColor;
   if (parentId !== undefined) updates.parentId = parentId;
   if (businessType !== undefined) updates.businessType = businessType;
+  if (bannerImageUrl !== undefined) updates.bannerImageUrl = bannerImageUrl;
   if (isActive !== undefined) updates.isActive = isActive;
   if (sortOrder !== undefined) updates.sortOrder = sortOrder;
   const [row] = await db.update(categoriesTable).set(updates).where(eq(categoriesTable.id, id)).returning();
