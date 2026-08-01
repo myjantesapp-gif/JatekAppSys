@@ -84,6 +84,59 @@ export function JatekOffersPanel({ tabBarHeight }: Props) {
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isOpenRef = useRef(false);
 
+  // Droplet button animations — several styles playing one after the other
+  const dropScale = useRef(new Animated.Value(1)).current;
+  const dropTransY = useRef(new Animated.Value(0)).current;
+  const dropWobble = useRef(new Animated.Value(0)).current; // -1..1 → degrees
+  const rippleScale = useRef(new Animated.Value(0.6)).current;
+  const rippleOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const pulse = Animated.sequence([
+      Animated.timing(dropScale, { toValue: 1.18, duration: 320, useNativeDriver: true }),
+      Animated.timing(dropScale, { toValue: 1, duration: 320, useNativeDriver: true }),
+      Animated.timing(dropScale, { toValue: 1.12, duration: 280, useNativeDriver: true }),
+      Animated.timing(dropScale, { toValue: 1, duration: 280, useNativeDriver: true }),
+    ]);
+    const bounce = Animated.sequence([
+      Animated.timing(dropTransY, { toValue: -12, duration: 260, useNativeDriver: true }),
+      Animated.spring(dropTransY, { toValue: 0, friction: 3, tension: 120, useNativeDriver: true }),
+      Animated.timing(dropTransY, { toValue: -8, duration: 220, useNativeDriver: true }),
+      Animated.spring(dropTransY, { toValue: 0, friction: 3, tension: 120, useNativeDriver: true }),
+    ]);
+    const wobble = Animated.sequence([
+      Animated.timing(dropWobble, { toValue: 1, duration: 120, useNativeDriver: true }),
+      Animated.timing(dropWobble, { toValue: -1, duration: 120, useNativeDriver: true }),
+      Animated.timing(dropWobble, { toValue: 0.6, duration: 110, useNativeDriver: true }),
+      Animated.timing(dropWobble, { toValue: -0.6, duration: 110, useNativeDriver: true }),
+      Animated.timing(dropWobble, { toValue: 0, duration: 100, useNativeDriver: true }),
+    ]);
+    const ripple = Animated.parallel([
+      Animated.sequence([
+        Animated.timing(rippleOpacity, { toValue: 0.55, duration: 120, useNativeDriver: true }),
+        Animated.timing(rippleOpacity, { toValue: 0, duration: 700, useNativeDriver: true }),
+      ]),
+      Animated.sequence([
+        Animated.timing(rippleScale, { toValue: 0.6, duration: 0, useNativeDriver: true }),
+        Animated.timing(rippleScale, { toValue: 1.9, duration: 820, useNativeDriver: true }),
+      ]),
+    ]);
+    const loop = Animated.loop(
+      Animated.sequence([
+        pulse,
+        Animated.delay(500),
+        bounce,
+        Animated.delay(500),
+        wobble,
+        Animated.delay(400),
+        ripple,
+        Animated.delay(900),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [dropScale, dropTransY, dropWobble, rippleScale, rippleOpacity]);
+
   const contentAnims = useRef(
     Array.from({ length: 3 }, () => ({
       opacity: new Animated.Value(0),
@@ -355,20 +408,45 @@ export function JatekOffersPanel({ tabBarHeight }: Props) {
         </Animated.View>
       </Animated.View>
 
-      {/* Compact floating pill — bottom-left, doesn't cover content */}
-      <TouchableOpacity
-        onPress={toggle}
-        activeOpacity={0.85}
-        style={st.pill}
-        accessibilityRole="button"
-        accessibilityLabel={open ? "Fermer les offres Jatek" : "Voir les offres Jatek"}
-      >
-        <Ionicons name="pricetag" size={14} color={PINK} style={{ marginRight: 6 }} />
-        <Text style={st.barLabel} numberOfLines={1}>Offres</Text>
-        <Animated.View style={{ transform: [{ rotate: chevronRotate }], marginLeft: 6 }}>
-          <Ionicons name="chevron-up" size={15} color={PINK} />
+      {/* Water-drop floating button — bottom-left, animated in cycles */}
+      <View style={st.dropZone} pointerEvents="box-none">
+        {/* Expanding ripple ring behind the drop */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            st.ripple,
+            { opacity: rippleOpacity, transform: [{ scale: rippleScale }] },
+          ]}
+        />
+        <Animated.View
+          style={{
+            transform: [
+              { translateY: dropTransY },
+              { scale: dropScale },
+              {
+                rotate: dropWobble.interpolate({
+                  inputRange: [-1, 1],
+                  outputRange: ["-10deg", "10deg"],
+                }),
+              },
+            ],
+          }}
+        >
+          <TouchableOpacity
+            onPress={toggle}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={open ? "Fermer les offres Jatek" : "Voir les offres Jatek"}
+          >
+            <View style={st.drop}>
+              <View style={st.dropInner}>
+                <Ionicons name="pricetag" size={20} color="#fff" />
+              </View>
+            </View>
+          </TouchableOpacity>
         </Animated.View>
-      </TouchableOpacity>
+        <Text style={st.dropLabel} numberOfLines={1}>Offres</Text>
+      </View>
     </View>
   );
 }
@@ -395,27 +473,48 @@ const st = StyleSheet.create({
     backgroundColor: "#fff",
     paddingBottom: 16,
   },
-  pill: {
+  dropZone: {
     alignSelf: "flex-start",
-    flexDirection: "row",
     alignItems: "center",
-    marginLeft: 12,
-    marginTop: 8,
-    marginBottom: 10,
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: "#FFF5F8",
-    borderWidth: 1,
-    borderColor: "rgba(233, 30, 99, 0.3)",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
+    marginLeft: 14,
+    marginTop: 14,
+    marginBottom: 8,
+    width: 64,
   },
-  barLabel: {
-    fontSize: 13,
+  ripple: {
+    position: "absolute",
+    top: -2,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 2,
+    borderColor: PINK,
+  },
+  drop: {
+    width: 54,
+    height: 54,
+    backgroundColor: PINK,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 27,
+    borderBottomLeftRadius: 27,
+    borderBottomRightRadius: 27,
+    transform: [{ rotate: "45deg" }],
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: PINK,
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  dropInner: {
+    transform: [{ rotate: "-45deg" }],
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dropLabel: {
+    marginTop: 4,
+    fontSize: 11,
     fontFamily: "Inter_700Bold",
     color: PINK,
     letterSpacing: 0.2,
