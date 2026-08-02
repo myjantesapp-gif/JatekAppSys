@@ -31,6 +31,7 @@ import * as tracking from "../lib/trackingService";
 import { pushNotification } from "./notifications";
 import { notifyDrivers } from "../lib/expoPush";
 import { sendWebPush } from "../lib/vapid";
+import { emitOrderCreated, emitOrderUpdated } from "../lib/socket";
 
 const router: IRouter = Router();
 
@@ -402,6 +403,11 @@ router.post("/orders", requireAuth, async (req: AuthedRequest, res, next): Promi
     orderItemsData.map((i) => ({ ...i, orderId: order.id }))
   );
 
+  // Notify connected drivers immediately. A newly created order is pending
+  // and normally has no driverId yet, so emitOrderCreated targets the driver
+  // pool; assigned orders also get their driver-specific room.
+  emitOrderCreated(order);
+
   // Persist aggregated item options into the order notes for kitchen readability
   if (orderItemsData.some((i) => i.selectedSize || i.selectedExtras)) {
     const optionsNotes = orderItemsData
@@ -602,6 +608,14 @@ router.patch("/orders/:id/status", requireAuth, async (req: AuthedRequest, res, 
   // double-count the delivery.
 
   const orderWithItems = await getOrderWithItems(order.id);
+
+  if (orderWithItems) {
+    if (order.status === "pending") {
+      emitOrderCreated(orderWithItems);
+    } else {
+      emitOrderUpdated(orderWithItems);
+    }
+  }
 
   // Push real-time events
   publish(`order:${order.id}`, "order_status", { orderId: order.id, status: order.status, order: orderWithItems });
