@@ -1,9 +1,15 @@
 #!/usr/bin/env sh
-# Jatek pre-commit: block commit if lockfile is out of sync
+# Jatek pre-commit: block commit if package manifests changed without updating lockfile.
+# Fast and non-mutating — does not run pnpm install.
 . "$(dirname -- "$0")/_/husky.sh"
 
-if ! pnpm install --frozen-lockfile --prefer-offline > /dev/null 2>&1; then
-  echo "❌ pnpm-lock.yaml is out of sync. Run 'pnpm install' and add pnpm-lock.yaml to your commit."
+DIRTY_MANIFESTS=$(git diff --cached --name-only | grep -E "package\.json$" | grep -v node_modules || true)
+DIRTY_LOCK=$(git diff --cached --name-only | grep "pnpm-lock.yaml" || true)
+
+if [ -n "$DIRTY_MANIFESTS" ] && [ -z "$DIRTY_LOCK" ]; then
+  echo "❌ package.json changed but pnpm-lock.yaml not staged."
+  echo "   Run 'pnpm install' and add pnpm-lock.yaml to your commit."
   exit 1
 fi
+
 echo "✔ Lockfile check passed"

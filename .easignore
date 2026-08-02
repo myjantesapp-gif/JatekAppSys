@@ -1,0 +1,34 @@
+# EAS build archive — exclude everything not needed for the mobile build
+# This reduces the upload from ~160 MB to a few MB.
+
+# Other artifacts (not needed for the mobile build)
+artifacts/api-server/
+artifacts/backend-dashboard/
+artifacts/jatek-landing/
+artifacts/jatek-driver/
+artifacts/mockup-sandbox/
+
+# Build outputs
+artifacts/jatek-mobile/dist/
+artifacts/jatek-mobile/.expo/
+artifacts/jatek-mobile/server/
+
+# Lib packages (bundled via Metro from node_modules, not from source)
+lib/
+
+# Root tooling
+.husky/
+.local/
+screenshots/
+scripts/
+
+# Node modules (EAS installs them fresh)
+node_modules/
+
+# Misc
+*.log
+*.md
+!artifacts/jatek-mobile/README.md
+.git/
+.cache/
+dist/

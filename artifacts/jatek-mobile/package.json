@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "main": "expo-router/entry",
+  "packageManager": "pnpm@10.26.1",
   "scripts": {
     "dev": "EXPO_TOKEN= EXPO_PUBLIC_REPL_ID=$REPL_ID EXPO_PUBLIC_PROJECT_ID=$EXPO_PUBLIC_PROJECT_ID EXPO_PUBLIC_GOOGLE_MAPS_KEY=$GOOGLE_API_KEY EXPO_PUBLIC_GOOGLE_PLACES_KEY=$GOOGLE_API_KEY pnpm exec expo start --tunnel --port $PORT",
     "build:expo": "node scripts/build.js",
