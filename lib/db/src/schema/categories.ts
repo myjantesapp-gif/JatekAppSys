@@ -10,6 +10,9 @@ export const categoriesTable = pgTable("categories", {
   accentColor: text("accent_color").notNull().default("#E91E63"),
   parentId: integer("parent_id"),
   businessType: text("business_type").notNull().default("restaurant"),
+  /** "category" = regular parent, "service_shortcut" = quick-action tile on home screen, "subcategory" = child */
+  type: text("type").notNull().default("category"),
+  bannerImageUrl: text("banner_image_url"),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

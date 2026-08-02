@@ -70,6 +70,22 @@ Jatek is a full-stack food delivery application serving Oujda, Morocco, connecti
 - **Content Management**: Features for managing categories, promotional ads, and short-form video content.
 - **Internationalization**: Supports English, French, and Arabic (RTL) across the customer web application.
 
+## Mobile App — Backend-driven architecture
+
+The mobile app (`artifacts/jatek-mobile`) is **100% backend-driven** — zero hardcoded business data:
+
+- All categories, icons, colors, slugs, and banner images come from `GET /api/categories` on `ma.jatek.app`.
+- Adding/disabling a category in the admin dashboard instantly updates the app with no rebuild needed.
+- Key fields on `Category`: `name`, `slug`, `icon`, `accentColor`, `businessType`, `bannerImageUrl`, `sortOrder`, `isActive`, `parentId`.
+- Full user guide: `artifacts/jatek-mobile/GUIDE_UTILISATEUR.md`
+
+### Mobile App — important rules
+
+- **Backend URL**: `https://ma.jatek.app` — never localhost in the app code.
+- Navigation slugs MUST come from the API `slug` field — never hardcode `"restauration"` or similar strings.
+- Banners/VIP partners in `category/[slug].tsx` are hidden when viewing a subcategory (`activeSubId !== "all"`).
+- `MenuItemDetailModal` uses `useSafeAreaInsets()` for the bottom action bar — required for Android gesture nav.
+
 ## User preferences
 
 _Populate as you build_

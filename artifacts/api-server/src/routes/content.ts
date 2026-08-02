@@ -9,12 +9,28 @@ const router: IRouter = Router();
 // Categories (public read)
 // ─────────────────────────────────────────────────────────────
 
-router.get("/categories", async (_req, res): Promise<void> => {
-  const all = await db.select().from(categoriesTable).where(eq(categoriesTable.isActive, true)).orderBy(asc(categoriesTable.sortOrder));
-  const parents = all.filter((c) => !c.parentId);
+router.get("/categories", async (req, res): Promise<void> => {
+  // Support optional filters: ?type=service_shortcut|category, ?businessType=restaurant, ?parentId=123, ?isActive=true|false
+  const { type: typeFilter, businessType: btFilter, parentId: parentIdFilter } = req.query as Record<string, string | undefined>;
+
+  const all = await db.select().from(categoriesTable)
+    .where(eq(categoriesTable.isActive, true))
+    .orderBy(asc(categoriesTable.sortOrder));
+
+  // Apply optional filters on the in-memory result (table is small)
+  let filtered = all;
+  if (typeFilter) filtered = filtered.filter((c) => c.type === typeFilter);
+  if (btFilter)   filtered = filtered.filter((c) => c.businessType === btFilter);
+  if (parentIdFilter !== undefined) {
+    const pid = parentIdFilter === "null" || parentIdFilter === "" ? null : Number(parentIdFilter);
+    filtered = filtered.filter((c) => c.parentId === pid);
+  }
+
+  // Build hierarchy: parents with nested subCategories[]
+  const parents = filtered.filter((c) => !c.parentId);
   const result = parents.map((p) => ({
     ...p,
-    subCategories: all.filter((c) => c.parentId === p.id),
+    subCategories: all.filter((c) => c.parentId === p.id && c.isActive),
   }));
   res.json(result);
 });
@@ -93,7 +109,7 @@ router.get("/backend/categories/all", requireAuth, async (req: AuthedRequest, re
 
 router.post("/backend/categories", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
   if (!await requireAdmin(req, res)) return;
-  const { name, slug, icon, accentColor, parentId, businessType, isActive, sortOrder } = req.body ?? {};
+  const { name, slug, icon, accentColor, parentId, businessType, type, bannerImageUrl, isActive, sortOrder } = req.body ?? {};
   if (!name || !slug) { res.status(400).json({ error: "name and slug required" }); return; }
   const [row] = await db.insert(categoriesTable).values({
     name,
@@ -102,6 +118,8 @@ router.post("/backend/categories", requireAuth, async (req: AuthedRequest, res):
     accentColor: accentColor ?? "#E91E63",
     parentId: parentId ?? null,
     businessType: businessType ?? "restaurant",
+    type: type ?? "category",
+    bannerImageUrl: bannerImageUrl ?? null,
     isActive: isActive !== false,
     sortOrder: sortOrder ?? 0,
   }).returning();
@@ -111,7 +129,7 @@ router.post("/backend/categories", requireAuth, async (req: AuthedRequest, res):
 router.patch("/backend/categories/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
   if (!await requireAdmin(req, res)) return;
   const id = Number(req.params.id);
-  const { name, slug, icon, accentColor, parentId, businessType, isActive, sortOrder } = req.body ?? {};
+  const { name, slug, icon, accentColor, parentId, businessType, type, bannerImageUrl, isActive, sortOrder } = req.body ?? {};
   const updates: Record<string, any> = {};
   if (name !== undefined) updates.name = name;
   if (slug !== undefined) updates.slug = String(slug).toLowerCase().replace(/\s+/g, "-");
@@ -119,6 +137,8 @@ router.patch("/backend/categories/:id", requireAuth, async (req: AuthedRequest, 
   if (accentColor !== undefined) updates.accentColor = accentColor;
   if (parentId !== undefined) updates.parentId = parentId;
   if (businessType !== undefined) updates.businessType = businessType;
+  if (type !== undefined) updates.type = type;
+  if (bannerImageUrl !== undefined) updates.bannerImageUrl = bannerImageUrl;
   if (isActive !== undefined) updates.isActive = isActive;
   if (sortOrder !== undefined) updates.sortOrder = sortOrder;
   const [row] = await db.update(categoriesTable).set(updates).where(eq(categoriesTable.id, id)).returning();

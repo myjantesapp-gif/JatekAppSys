@@ -61,15 +61,6 @@ const CARD_BORDER = "#F0F0F0";
 // Shop categories (3×2 grid below the header)
 const CAT_TINT = "#F2EDD0"; // light yellow-olive — shared tile background
 
-// Service squares (Service Coursier / Boutiques / Offers / Parapharm)
-const SERVICES = [
-  { key: "courier",  label: "Service Coursier", bg: "#D7F6FA", icon: "bicycle"   as const, color: "#0AA5C0", businessType: "services",     categorySlug: "coursier" },
-  { key: "shops",    label: "Boutiques",        bg: "#FFC9D8", icon: "storefront" as const, color: "#C2185B", businessType: "shop",          categorySlug: "boutiques" },
-  { key: "offers",   label: "Offers",           bg: "#A8F08A", icon: "pricetag"  as const, color: "#3A7D1B", businessType: "restaurant",    categorySlug: null, isOpen: true },
-  { key: "pharm",    label: "Parapharm",        bg: "#E5A3F0", icon: "medkit"    as const, color: "#7A2A8C", businessType: "parapharmacy",  categorySlug: "sante" },
-];
-
-
 // Default fallback image used when a restaurant has no imageUrl.
 // Picsum food-style placeholder (always reachable, no auth needed).
 const FALLBACK_FOOD =
@@ -249,6 +240,7 @@ export default function HomeScreen() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [activeBusinessType, setActiveBusinessType] = useState("restaurant");
   const [activeLabel, setActiveLabel] = useState("Tous les Restaurants");
+
   const [onlyOpen, setOnlyOpen] = useState<boolean | undefined>(undefined);
   const [addressPickerOpen, setAddressPickerOpen] = useState(false);
   const [shortsVisible, setShortsVisible] = useState(false);
@@ -267,10 +259,29 @@ export default function HomeScreen() {
   const { data: featuredPartners } = useGetFeaturedRestaurants();
   const { data: apiCategories, isLoading: categoriesLoading } = useListCategories();
 
+  // Derive restaurant category slug dynamically from API so we never hardcode "restauration".
+  const restaurantCategorySlug = useMemo(() => {
+    const cat = (apiCategories ?? []).find(
+      (c: any) => !c.parentId && c.isActive !== false && c.businessType === "restaurant",
+    ) as any;
+    return cat?.slug ?? null;
+  }, [apiCategories]);
+
   // Categories are 100% managed from the admin dashboard (ma.jatek.app/admin).
-  // No hardcoded fallback: while loading we show a spinner, if empty a message.
+  // "service_shortcut" type → quick-action row; "category" type → Explorer slider.
+  // Legacy rows with no type field fall back to "category".
+  const serviceShortcuts = useMemo(() => {
+    const parents = (apiCategories ?? []).filter((c: any) => !c.parentId && c.isActive !== false && c.type === "service_shortcut");
+    return parents.map((c: any) => ({
+      slug: c.slug,
+      label: c.name,
+      icon: (c.icon || "flash-outline") as any,
+      accent: c.accentColor || PINK,
+    }));
+  }, [apiCategories]);
+
   const shopCategories = useMemo(() => {
-    const parents = (apiCategories ?? []).filter((c: any) => !c.parentId && c.isActive !== false);
+    const parents = (apiCategories ?? []).filter((c: any) => !c.parentId && c.isActive !== false && c.type !== "service_shortcut");
     return parents.map((c: any) => ({
       slug: c.slug,
       label: c.name,
@@ -294,17 +305,6 @@ export default function HomeScreen() {
     setActiveCat(null);
     setOnlyOpen(undefined);
     setActiveLabel("Tous les Restaurants");
-  };
-
-  const applyService = (sv: typeof SERVICES[number]) => {
-    if (sv.categorySlug) {
-      router.push({ pathname: "/category/[slug]", params: { slug: sv.categorySlug } });
-      return;
-    }
-    setActiveBusinessType(sv.businessType);
-    setActiveCat(null);
-    setOnlyOpen(sv.isOpen);
-    setActiveLabel(sv.label);
   };
 
   const openShort = (index: number) => {
@@ -386,6 +386,38 @@ export default function HomeScreen() {
           <WaveEdge color={PINK} height={28} />
         </View>
 
+        {/* ─── Service shortcuts row (type=service_shortcut from admin) ─── */}
+        {serviceShortcuts.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(60).duration(450).springify()}>
+            <Animated.ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled
+              contentContainerStyle={[s.shopCatsContent, { paddingTop: 6, paddingBottom: 4 }]}
+            >
+              {serviceShortcuts.map((sc) => (
+                <Pressable
+                  key={sc.slug}
+                  onPress={() => router.push({ pathname: "/category/[slug]", params: { slug: sc.slug } })}
+                  style={({ pressed }) => [s.shopCatItem, { width: 80 }, pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] }]}
+                >
+                  <View style={[s.shopCatTile, { backgroundColor: sc.accent, width: 60, height: 60 }]}>
+                    <Ionicons name={sc.icon} size={28} color="#fff" />
+                  </View>
+                  <Text
+                    style={[s.shopCatLabel, { color: TEXT_DARK, fontWeight: "600" }]}
+                    numberOfLines={2}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                  >
+                    {sc.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </Animated.ScrollView>
+          </Animated.View>
+        )}
+
         {/* ─── Shop categories horizontal slider ─── */}
         <Animated.Text entering={FadeInDown.delay(80).duration(450).springify()} style={s.sliderSectionTitle}>Explorer</Animated.Text>
         {categoriesLoading && shopCategories.length === 0 && (
@@ -415,7 +447,12 @@ export default function HomeScreen() {
               <View style={[s.shopCatTile, { backgroundColor: c.accent + "1A" }]}>
                 <Ionicons name={c.icon} size={34} color={c.accent} />
               </View>
-              <Text style={[s.shopCatLabel, { color: c.accent }]} numberOfLines={1}>
+              <Text
+                style={[s.shopCatLabel, { color: c.accent }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.65}
+              >
                 {c.label}
               </Text>
             </Pressable>
@@ -500,7 +537,10 @@ export default function HomeScreen() {
         <Animated.View entering={FadeInDown.delay(560).duration(500).springify()}>
           <SectionHeader
             title="Près de chez vous"
-            onMore={() => router.push({ pathname: "/category/[slug]", params: { slug: "restauration" } })}
+            onMore={() => restaurantCategorySlug
+              ? router.push({ pathname: "/category/[slug]", params: { slug: restaurantCategorySlug } })
+              : undefined
+            }
           />
         </Animated.View>
         {isLoading ? (
@@ -696,7 +736,7 @@ const s = StyleSheet.create({
   shopCatItem: {
     alignItems: "center",
     gap: 8,
-    width: 90,
+    width: 84,
   },
   shopCatTile: {
     width: 70,

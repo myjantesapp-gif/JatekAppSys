@@ -53,21 +53,9 @@ type SubcatConfig = {
 type SlugConfig = {
   label: string;
   color: string;
-  bannerImage: any;
+  bannerImageUrl: string | null;
   businessType: string;
   subcategories: SubcatConfig[];
-};
-
-// Banner images are the only local (visual-only) asset kept per slug.
-// All category data (label, color, businessType, subcategories) comes from
-// the backend — managed via ma.jatek.app/admin.
-const BANNER_IMAGES: Record<string, any> = {
-  restauration: require("../../assets/images/cat-restauration.jpg"),
-  epicerie: require("../../assets/images/cat-epicerie.jpg"),
-  sante: require("../../assets/images/cat-sante.jpg"),
-  supermarche: require("../../assets/images/cat-supermarche.jpg"),
-  boutiques: require("../../assets/images/cat-boutiques.jpg"),
-  coursier: require("../../assets/images/cat-coursier.jpg"),
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -223,7 +211,7 @@ export default function CategoryScreen() {
       return {
         label: slug ?? "Catégorie",
         color: PINK,
-        bannerImage: BANNER_IMAGES[slug ?? ""] ?? null,
+        bannerImageUrl: null,
         businessType: "",
         subcategories: [{ id: "all", label: "Tout", icon: "grid" }],
       };
@@ -238,7 +226,7 @@ export default function CategoryScreen() {
     return {
       label: parent.name,
       color: parent.accentColor || PINK,
-      bannerImage: BANNER_IMAGES[slug ?? ""] ?? null,
+      bannerImageUrl: parent.bannerImageUrl ?? null,
       businessType: parent.businessType || "restaurant",
       subcategories: [
         { id: "all", label: "Tout", icon: "grid" },
@@ -290,11 +278,11 @@ export default function CategoryScreen() {
 
   return (
     <View style={[styles.root]}>
-      {/* ─── Banner header with placeholder image at 80% opacity ─── */}
+      {/* ─── Banner header — image served from backend bannerImageUrl ─── */}
       <View style={[styles.bannerWrap, { paddingTop: insets.top + 6 }]}>
-        {config.bannerImage && (
-          <Image source={config.bannerImage} style={styles.bannerImg} resizeMode="cover" />
-        )}
+        {config.bannerImageUrl ? (
+          <Image source={{ uri: config.bannerImageUrl }} style={styles.bannerImg} resizeMode="cover" />
+        ) : null}
         <View style={styles.bannerOverlay} />
         <View style={styles.bannerTopRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
@@ -357,8 +345,8 @@ export default function CategoryScreen() {
               ))}
             </Animated.ScrollView>
 
-            {/* ─── VIP / Promo partners horizontal slider (Talabat style) ─── */}
-            {vipPartners.length > 0 && (
+            {/* ─── VIP / Promo partners — only at parent-category level, hidden in subcategory view ─── */}
+            {vipPartners.length > 0 && activeSubId === "all" && (
               <Animated.View entering={FadeInDown.delay(260).duration(550).springify()} style={styles.vipSection}>
                 <View style={styles.vipHeader}>
                   <Text style={styles.vipTitle}>Partenaires VIP & Promotions</Text>
