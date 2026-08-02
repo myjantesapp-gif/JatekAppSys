@@ -37,7 +37,7 @@ module.exports = ({ config }) => {
     },
     android: {
       package: "ma.jatek.app",
-      versionCode: 11,
+      versionCode: 12,
       permissions: [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
