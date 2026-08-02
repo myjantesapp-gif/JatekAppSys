@@ -150,7 +150,7 @@ export default function Categories() {
   const [createForm, setCreateForm] = useState(EMPTY);
   const [editForm, setEditForm] = useState(EMPTY);
 
-  const cats = (categories ?? []) as Cat[];
+  const cats = (categories ?? []) as unknown as Cat[];
   const invalidate = () => qc.invalidateQueries({ queryKey: getListBackendCategoriesQueryKey() });
 
   const toggle = (id: number) =>

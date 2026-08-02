@@ -161,10 +161,10 @@ if (process.env.NODE_ENV === "production") {
   }
 
   // SPA fallback for the landing page at root (after /admin and /api routes)
-  app.get("/*splat", (req, res) => {
+  app.get("/*splat", (req, res): void => {
     // API and admin paths should not be served by the landing page SPA
     if (req.path.startsWith("/api") || req.path.startsWith("/admin")) {
-      return res.status(404).json({ error: "Not found", path: req.path });
+      res.status(404).json({ error: "Not found", path: req.path }); return;
     }
     res.sendFile(path.join(landingDir, "index.html"));
   });

@@ -93,13 +93,13 @@ export default function Orders() {
         const res = await apiFetch(`/api/backend/orders/${selectedOrder.id}/refund`, {
           method: "POST",
           body: JSON.stringify({ amount: Number(actionForm.amount), reason: actionForm.reason, notes: actionForm.notes }),
-        });
+        }) as any;
         toast({ title: `Remboursement effectué: ${res.refundedAmount} DH crédité ✓` });
       } else if (actionModal === "cancel") {
         const res = await apiFetch(`/api/backend/orders/${selectedOrder.id}/cancel`, {
           method: "PATCH",
           body: JSON.stringify({ reason: actionForm.reason, refundToWallet: actionForm.refundToWallet }),
-        });
+        }) as any;
         toast({ title: res.message });
         setSelectedOrder({ ...selectedOrder, status: "cancelled" as any });
         qc.invalidateQueries({ queryKey: getListBackendOrdersQueryKey() });
@@ -107,7 +107,7 @@ export default function Orders() {
         const res = await apiFetch(`/api/backend/orders/${selectedOrder.id}/gesture`, {
           method: "POST",
           body: JSON.stringify({ amount: Number(actionForm.amount), reason: actionForm.reason }),
-        });
+        }) as any;
         toast({ title: `Geste commercial: ${res.creditedAmount} DH crédité ✓` });
       }
       setActionModal(null);
@@ -231,7 +231,7 @@ export default function Orders() {
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground mb-1">Total</p>
                     <p className="text-xl font-bold text-primary">{selectedOrder.total} DH</p>
-                    {selectedOrder.discountAmount > 0 && <p className="text-xs text-green-600">-{selectedOrder.discountAmount} DH promo</p>}
+                    {(selectedOrder as any).discountAmount > 0 && <p className="text-xs text-green-600">-{(selectedOrder as any).discountAmount} DH promo</p>}
                   </div>
                 </div>
 
@@ -251,7 +251,7 @@ export default function Orders() {
                       {orderDetail?.items.map((item) => (
                         <div key={item.id} className="flex justify-between text-sm">
                           <span>{item.quantity}× {item.menuItemName}
-                            {item.selectedSize && <span className="text-xs text-muted-foreground ml-1">({item.selectedSize})</span>}
+                            {(item as any).selectedSize && <span className="text-xs text-muted-foreground ml-1">({(item as any).selectedSize})</span>}
                           </span>
                           <span className="font-medium">{item.totalPrice} DH</span>
                         </div>

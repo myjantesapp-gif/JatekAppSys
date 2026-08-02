@@ -298,7 +298,7 @@ router.patch("/drivers/me/push-token", requireAuth, async (req: AuthedRequest, r
 });
 
 router.get("/drivers/:id/location", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid driver id" }); return; }
 
   const [driver] = await db.select().from(driversTable).where(eq(driversTable.id, id)).limit(1);

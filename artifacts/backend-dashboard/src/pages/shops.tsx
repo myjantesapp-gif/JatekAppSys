@@ -425,7 +425,7 @@ function ShopForm({
   const logoRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
 
-  const cats = (allCategories ?? []) as CatWithSubs[];
+  const cats = (allCategories ?? []) as unknown as CatWithSubs[];
 
   // Find the active parent: prefer explicit parentSlug selection, fall back to
   // matching an existing shop's category value against any subcategory name.

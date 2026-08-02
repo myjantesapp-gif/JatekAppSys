@@ -19,6 +19,7 @@ import { eq, inArray, count, sum, gte, ilike, and, or, desc, sql } from "drizzle
 import { requireAuth, type AuthedRequest } from "../middlewares/auth";
 import { sendOtpMessage } from "../lib/otpMessaging";
 import * as tracking from "../lib/trackingService";
+import { publish } from "../lib/sse";
 
 const router: IRouter = Router();
 
@@ -1348,14 +1349,14 @@ router.post("/backend/orders/:id/assign-driver", requireAuth, async (req: Authed
 
     const [order] = await db
       .update(ordersTable)
-      .set({ driverId: driver.id, driverName: driver.name })
+      .set({ driverId: driver.id })
       .where(eq(ordersTable.id, orderId))
       .returning();
 
     if (!order) { res.status(404).json({ error: "Commande introuvable" }); return; }
 
     // Notify driver via SSE
-    publish(`driver_orders:${driver.id}`, { type: "order_assigned", orderId });
+    publish(`driver_orders:${driver.id}`, "order_assigned", { orderId });
 
     res.json(order);
   } catch (err: any) {

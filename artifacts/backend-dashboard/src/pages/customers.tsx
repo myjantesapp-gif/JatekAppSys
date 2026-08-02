@@ -72,7 +72,7 @@ export default function Customers() {
     if (pwdForm.newPassword.length < 8) { toast({ title: "Min. 8 caractères", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/backend/users/${selected.id}/reset-password`, { method: "PATCH", body: JSON.stringify({ newPassword: pwdForm.newPassword }) });
+      const res = await apiFetch(`/api/backend/users/${selected.id}/reset-password`, { method: "PATCH", body: JSON.stringify({ newPassword: pwdForm.newPassword }) }) as any;
       toast({ title: res.message ?? "Mot de passe réinitialisé ✓" });
       setAction(null); setPwdForm({ newPassword: "", confirm: "" });
     } catch (e: any) { toast({ title: "Erreur", description: e?.message, variant: "destructive" }); }
@@ -83,7 +83,7 @@ export default function Customers() {
     if (!selected || !walletForm.amount) return;
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/backend/users/${selected.id}/wallet-credit`, { method: "PATCH", body: JSON.stringify({ amount: Number(walletForm.amount), reason: walletForm.reason }) });
+      const res = await apiFetch(`/api/backend/users/${selected.id}/wallet-credit`, { method: "PATCH", body: JSON.stringify({ amount: Number(walletForm.amount), reason: walletForm.reason }) }) as any;
       toast({ title: res.message ?? "Wallet crédité ✓" });
       setAction(null); invalidate();
     } catch (e: any) { toast({ title: "Erreur", description: e?.message, variant: "destructive" }); }
@@ -94,7 +94,7 @@ export default function Customers() {
     if (!selected) return;
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/backend/users/${selected.id}/assign-restaurant`, { method: "PATCH", body: JSON.stringify({ restaurantId: shopForm.restaurantId ? Number(shopForm.restaurantId) : null }) });
+      const res = await apiFetch(`/api/backend/users/${selected.id}/assign-restaurant`, { method: "PATCH", body: JSON.stringify({ restaurantId: shopForm.restaurantId ? Number(shopForm.restaurantId) : null }) }) as any;
       toast({ title: res.message ?? "Assigné ✓" });
       setAction(null); invalidate();
     } catch (e: any) { toast({ title: "Erreur", description: e?.message, variant: "destructive" }); }
@@ -165,7 +165,7 @@ export default function Customers() {
                   <TableCell className="hidden sm:table-cell">
                     <div className="text-xs space-y-0.5">
                       <div className="font-medium text-primary">{c.loyaltyPoints} pts</div>
-                      <div className="text-muted-foreground">{c.walletBalance?.toFixed(2) ?? "0.00"} DH</div>
+                      <div className="text-muted-foreground">{(c as any).walletBalance?.toFixed(2) ?? "0.00"} DH</div>
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{format(new Date(c.createdAt), "dd MMM yyyy")}</TableCell>

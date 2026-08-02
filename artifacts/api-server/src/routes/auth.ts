@@ -59,7 +59,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     phone: phone ?? null, loyaltyPoints: 0, isActive: true,
   }).returning();
 
-  if (role === "driver") {
+  // Public registration always yields role="customer"; dead branch kept for
+  // future backend-panel usage where role could be "driver".
+  if ((role as string) === "driver") {
     await db.insert(driversTable).values({
       userId: user.id, name: user.name, phone: user.phone ?? null,
       isAvailable: true, totalDeliveries: 0,
@@ -259,7 +261,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       role: userRole, phone: normalizedPhone, loyaltyPoints: 0, isActive: true,
     }).returning();
 
-    if (userRole === "driver") {
+    if ((userRole as string) === "driver") {
       await db.insert(driversTable).values({
         userId: newUser.id, name: newUser.name, phone: newUser.phone ?? null,
         isAvailable: true, totalDeliveries: 0,
