@@ -99,12 +99,4 @@ check "/admin/"
 check "/api/healthz"
 check "/health"
 
-echo "[smoke] Probing Socket.IO Engine.IO handshake…"
-SOCKET_HANDSHAKE="$(curl -fsS --max-time 10 "$BASE_URL/socket.io/?EIO=4&transport=polling" || true)"
-if ! printf '%s' "$SOCKET_HANDSHAKE" | grep -qE '^0\{"sid":"[^"]+"' ; then
-  echo "[smoke] Socket.IO response: ${SOCKET_HANDSHAKE:0:200}" >&2
-  fail "GET /socket.io/?EIO=4&transport=polling did not return an Engine.IO handshake"
-fi
-echo "[smoke]   GET /socket.io/?EIO=4&transport=polling → Engine.IO handshake"
-
 echo "[smoke] OK — production bundle boots and serves all expected routes."

@@ -313,6 +313,7 @@ export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantO
                     style={[styles.addBtn, { backgroundColor: colors.primary }]}
                   >
                     <Text style={styles.addBtnText}>Ajouter au panier</Text>
+                    <Text style={styles.addBtnPrice}>{total.toFixed(0)} MAD</Text>
                   </TouchableOpacity>
                 </Animated.View>
               </>
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 22,
     shadowColor: "#E2006A",
     shadowOpacity: 0.3,

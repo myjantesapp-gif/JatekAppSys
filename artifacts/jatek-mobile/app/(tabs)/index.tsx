@@ -75,6 +75,23 @@ const GRID_CARD_W = (SCREEN_W - GRID_SIDE * 2 - GRID_GAP) / 2;
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
+function PromoBanner({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [s.promoBanner, pressed && { opacity: 0.9 }]}>
+      <View style={s.promoBannerLeft}>
+        <View style={s.promoTagBadge}>
+          <Text style={s.promoTagTxt}>CODE PROMO</Text>
+        </View>
+        <Text style={s.promoMinusClean} numberOfLines={1}>-10%</Text>
+        <Text style={s.promoCodeClean} numberOfLines={1}>avec WELCOME10</Text>
+      </View>
+      <View style={s.promoBrandWrap}>
+        <Text style={s.promoBrandClean} numberOfLines={1}>Jatek</Text>
+        <Ionicons name="arrow-forward-circle" size={28} color={PINK} />
+      </View>
+    </Pressable>
+  );
+}
 
 function VipBannerCard({
   title,
@@ -138,9 +155,9 @@ function RestaurantTile({
   showDistance?: boolean;
 }) {
   const img = restaurant.imageUrl || FALLBACK_FOOD;
-  const rating = restaurant.rating;
-  const time = restaurant.deliveryTime;
-  const fee = restaurant.deliveryFee;
+  const rating = restaurant.rating ?? 4.5;
+  const time = restaurant.deliveryTime ?? 25;
+  const fee = restaurant.deliveryFee ?? 10;
 
   return (
     <Pressable
@@ -176,31 +193,32 @@ function RestaurantTile({
           <Text style={s.tileName} numberOfLines={1}>
             {restaurant.name}
           </Text>
-          {rating != null && (
-            <View style={s.tileRatingInline}>
-              <Ionicons name="star" size={11} color={STAR} />
-              <Text style={s.tileRatingTxt}>{rating.toFixed(1)}</Text>
-            </View>
-          )}
+          <View style={s.tileRatingInline}>
+            <Ionicons name="star" size={11} color={STAR} />
+            <Text style={s.tileRatingTxt}>{rating.toFixed(1)}</Text>
+          </View>
         </View>
         <View style={s.tileMetaRow}>
-          {time != null && (
-            <>
-              <Ionicons name="time-outline" size={12} color={TEXT_MUTED} />
-              <Text style={s.tileMetaTxt}>
-                {time} - {time + 10} min
-              </Text>
-            </>
-          )}
-          {fee != null && (
+          <Ionicons name="time-outline" size={12} color={TEXT_MUTED} />
+          <Text style={s.tileMetaTxt}>
+            {time} - {time + 10} min
+          </Text>
+          <Ionicons
+            name="bicycle-outline"
+            size={12}
+            color={TEXT_MUTED}
+            style={{ marginLeft: 8 }}
+          />
+          <Text style={s.tileMetaTxt}>{fee} MAD</Text>
+          {showDistance && (
             <>
               <Ionicons
-                name="bicycle-outline"
+                name="location-outline"
                 size={12}
                 color={TEXT_MUTED}
-                style={{ marginLeft: time != null ? 8 : 0 }}
+                style={{ marginLeft: 8 }}
               />
-              <Text style={s.tileMetaTxt}>{fee} MAD</Text>
+              <Text style={s.tileMetaTxt}>152m</Text>
             </>
           )}
         </View>
@@ -279,7 +297,7 @@ export default function HomeScreen() {
   const goRestaurant = (id: number) =>
     router.push({ pathname: "/restaurant/[id]", params: { id: String(id) } });
 
-  const addressLabel = selectedAddress || "Choisir une adresse";
+  const addressLabel = selectedAddress || "Livraison en 5R22+CVC2";
   const currentLabel = activeLabel;
 
   const showRestaurants = () => {
@@ -454,13 +472,13 @@ export default function HomeScreen() {
           decelerationRate="fast"
           snapToInterval={SCREEN_W - 20}
         >
-          {(featuredPartners ?? []).slice(0, 6).map((r) => (
+          {(featuredPartners ?? []).slice(0, 6).map((r, i) => (
             <VipBannerCard
               key={`vip-${r.id}`}
               title={r.name}
-              subtitle={r.description || ""}
-              bgColor={r.isVerified ? PINK : "#0A1B3D"}
-              badge={r.isVerified ? "VIP" : "PROMO"}
+              subtitle={i % 2 === 0 ? "-20% sur votre première commande" : "Livraison gratuite aujourd'hui"}
+              bgColor={i % 2 === 0 ? PINK : "#0A1B3D"}
+              badge={i % 2 === 0 ? "VIP" : "PROMO"}
               imageUrl={r.imageUrl ?? r.coverImageUrl}
               onPress={() => {
                 trackBannerClick(r.id);
@@ -472,6 +490,11 @@ export default function HomeScreen() {
             <Text style={s.emptyTxt}>Aucune offre disponible pour le moment</Text>
           )}
         </Animated.ScrollView>
+
+        {/* ─── Promo banner -10% Jatek WELCOME10 ─── */}
+        <Animated.View entering={FadeInDown.delay(380).duration(500).springify()} style={{ paddingHorizontal: 16, marginTop: 18 }}>
+          <PromoBanner onPress={() => router.push("/profile/coupons?code=WELCOME10" as any)} />
+        </Animated.View>
 
         {/* ─── Découvrir en vidéo ─── */}
         <Animated.View entering={FadeInDown.delay(440).duration(500).springify()}>
@@ -534,7 +557,7 @@ export default function HomeScreen() {
               <RestaurantTile
                 key={r.id}
                 restaurant={r}
-                badge={r.isLocal ? "nouveau" : null}
+                badge={i % 2 === 0 ? "nouveau" : "promo"}
                 width={260}
                 onPress={() => goRestaurant(r.id)}
                 showDistance
@@ -545,6 +568,11 @@ export default function HomeScreen() {
             )}
           </Animated.ScrollView>
         )}
+
+        {/* ─── Big promotional banner (lower position) ─── */}
+        <Animated.View entering={FadeInDown.delay(680).duration(500).springify()} style={{ paddingHorizontal: 16, marginTop: 18 }}>
+          <PromoBanner onPress={() => router.push("/profile/coupons?code=WELCOME10" as any)} />
+        </Animated.View>
 
         {/* ─── Tous les Restaurants (2-column grid) ─── */}
         <Animated.View entering={FadeInDown.delay(740).duration(550).springify()} style={s.gridSection}>
@@ -561,7 +589,7 @@ export default function HomeScreen() {
                 >
                   <RestaurantTile
                     restaurant={r}
-                    badge={r.isLocal ? "nouveau" : null}
+                    badge={i % 2 === 0 ? "nouveau" : "promo"}
                     width={GRID_CARD_W}
                     onPress={() => goRestaurant(r.id)}
                   />
@@ -783,6 +811,61 @@ const s = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     color: TEXT_DARK,
   },
+
+  // ── Promo banner (clean, no colored bg) ──
+  promoBanner: {
+    width: "100%",
+    minHeight: 80,
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#F0F0F5",
+    shadowColor: PINK,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+    overflow: "hidden",
+    gap: 12,
+  },
+  promoBannerLeft: { flex: 1, minWidth: 0, gap: 3 },
+  promoTagBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: PINK_SOFT,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  promoTagTxt: { fontSize: 10, fontFamily: "Inter_700Bold", color: PINK, letterSpacing: 0.6 },
+  promoMinusClean: {
+    fontSize: 28,
+    fontFamily: "Inter_900Black",
+    color: TEXT_DARK,
+    letterSpacing: -0.5,
+    lineHeight: 32,
+  },
+  promoCodeClean: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: TEXT_MUTED,
+    flexShrink: 1,
+  },
+  promoBrandWrap: { alignItems: "center", gap: 6, flexShrink: 0 },
+  promoBrandClean: {
+    fontSize: 24,
+    fontFamily: "Inter_900Black",
+    color: PINK,
+    fontStyle: "italic",
+    letterSpacing: -0.5,
+  },
+  promoMinus: { fontSize: 44, fontFamily: "Inter_900Black", color: "#fff", letterSpacing: -1.5, lineHeight: 48 },
+  promoCode: { fontSize: 16, fontFamily: "Inter_700Bold", color: NEW_GREEN, letterSpacing: 1, marginTop: 2 },
+  promoBrand: { fontSize: 38, fontFamily: "Inter_900Black", color: "#fff", fontStyle: "italic", letterSpacing: -1 },
 
   // ── VIP partners horizontal slider ──
   vipHeaderWrap: {

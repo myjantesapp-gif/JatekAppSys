@@ -109,11 +109,10 @@ export default function TabLayout() {
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontFamily: "Inter_600SemiBold",
-          fontSize: 10,
+          fontSize: 11,
           marginTop: 2,
-          includeFontPadding: false,
         },
-        tabBarItemStyle: { paddingTop: 6, flex: 1, minWidth: 0 },
+        tabBarItemStyle: { paddingTop: 6 },
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
           borderTopWidth: StyleSheet.hairlineWidth,
