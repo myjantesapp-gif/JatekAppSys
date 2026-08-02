@@ -6,6 +6,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import ReAnimated, { FadeIn, SlideInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { listMenuItemSizes, listMenuItemExtras } from "@/lib/api";
 
@@ -60,6 +61,7 @@ const DEFAULT_TAGS = [
 
 export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantOpen = true, onClose, onAdd }: Props) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const [qty, setQty] = useState(Math.max(1, initialQty));
   const [sizes, setSizes] = useState<MenuItemSize[]>([]);
   const [extrasList, setExtrasList] = useState<MenuItemExtra[]>([]);
@@ -290,8 +292,8 @@ export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantO
             </View>
           </ScrollView>
 
-          {/* Bottom action bar */}
-          <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+          {/* Bottom action bar — paddingBottom accounts for Android nav bar via safe area insets */}
+          <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, Platform.OS === "ios" ? 28 : 16) }]}>
             {restaurantOpen ? (
               <>
                 <View style={[styles.qtyBox, { backgroundColor: colors.muted }]}>
@@ -458,7 +460,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: Platform.OS === "ios" ? 28 : 16,
+    // paddingBottom is set inline to incorporate safe area insets dynamically
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   qtyBox: {

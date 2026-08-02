@@ -3,6 +3,7 @@ import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, Image,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -107,15 +108,18 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={[styles.flex, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}
       >
-        {/* Back button (top-left) */}
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Back button — SafeAreaView handles the top notch, so top:12 is relative to safe area */}
         <TouchableOpacity
           onPress={() => {
             if (Platform.OS !== "web") Haptics.selectionAsync();
@@ -315,7 +319,8 @@ export default function LoginScreen() {
         onSelect={setCountry}
         onClose={() => setShowPicker(false)}
       />
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

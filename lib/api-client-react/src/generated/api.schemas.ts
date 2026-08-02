@@ -911,6 +911,8 @@ export interface Category {
   /** @nullable */
   parentId?: number | null;
   businessType: string;
+  /** "category" | "service_shortcut" | "subcategory" */
+  type?: string;
   /** @nullable */
   bannerImageUrl?: string | null;
   isActive: boolean;
@@ -928,6 +930,8 @@ export interface CategoryWithSubs {
   /** @nullable */
   parentId?: number | null;
   businessType: string;
+  /** "category" | "service_shortcut" | "subcategory" */
+  type?: string;
   /** @nullable */
   bannerImageUrl?: string | null;
   isActive: boolean;
@@ -945,6 +949,8 @@ export interface CategoryBody {
   /** @nullable */
   parentId?: number | null;
   businessType?: string;
+  /** "category" | "service_shortcut" | "subcategory" */
+  type?: string;
   /** @nullable */
   bannerImageUrl?: string | null;
   isActive?: boolean;

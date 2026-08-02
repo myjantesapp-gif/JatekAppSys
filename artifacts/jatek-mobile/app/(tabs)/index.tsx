@@ -267,9 +267,20 @@ export default function HomeScreen() {
   const { data: apiCategories, isLoading: categoriesLoading } = useListCategories();
 
   // Categories are 100% managed from the admin dashboard (ma.jatek.app/admin).
-  // No hardcoded fallback: while loading we show a spinner, if empty a message.
+  // "service_shortcut" type → quick-action row; "category" type → Explorer slider.
+  // Legacy rows with no type field fall back to "category".
+  const serviceShortcuts = useMemo(() => {
+    const parents = (apiCategories ?? []).filter((c: any) => !c.parentId && c.isActive !== false && c.type === "service_shortcut");
+    return parents.map((c: any) => ({
+      slug: c.slug,
+      label: c.name,
+      icon: (c.icon || "flash-outline") as any,
+      accent: c.accentColor || PINK,
+    }));
+  }, [apiCategories]);
+
   const shopCategories = useMemo(() => {
-    const parents = (apiCategories ?? []).filter((c: any) => !c.parentId && c.isActive !== false);
+    const parents = (apiCategories ?? []).filter((c: any) => !c.parentId && c.isActive !== false && c.type !== "service_shortcut");
     return parents.map((c: any) => ({
       slug: c.slug,
       label: c.name,
@@ -373,6 +384,38 @@ export default function HomeScreen() {
           <WaveEdge color={PINK} height={28} />
         </View>
 
+        {/* ─── Service shortcuts row (type=service_shortcut from admin) ─── */}
+        {serviceShortcuts.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(60).duration(450).springify()}>
+            <Animated.ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled
+              contentContainerStyle={[s.shopCatsContent, { paddingTop: 6, paddingBottom: 4 }]}
+            >
+              {serviceShortcuts.map((sc) => (
+                <Pressable
+                  key={sc.slug}
+                  onPress={() => router.push({ pathname: "/category/[slug]", params: { slug: sc.slug } })}
+                  style={({ pressed }) => [s.shopCatItem, { width: 80 }, pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] }]}
+                >
+                  <View style={[s.shopCatTile, { backgroundColor: sc.accent, width: 60, height: 60 }]}>
+                    <Ionicons name={sc.icon} size={28} color="#fff" />
+                  </View>
+                  <Text
+                    style={[s.shopCatLabel, { color: TEXT_DARK, fontWeight: "600" }]}
+                    numberOfLines={2}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                  >
+                    {sc.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </Animated.ScrollView>
+          </Animated.View>
+        )}
+
         {/* ─── Shop categories horizontal slider ─── */}
         <Animated.Text entering={FadeInDown.delay(80).duration(450).springify()} style={s.sliderSectionTitle}>Explorer</Animated.Text>
         {categoriesLoading && shopCategories.length === 0 && (
@@ -402,7 +445,12 @@ export default function HomeScreen() {
               <View style={[s.shopCatTile, { backgroundColor: c.accent + "1A" }]}>
                 <Ionicons name={c.icon} size={34} color={c.accent} />
               </View>
-              <Text style={[s.shopCatLabel, { color: c.accent }]} numberOfLines={1}>
+              <Text
+                style={[s.shopCatLabel, { color: c.accent }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.65}
+              >
                 {c.label}
               </Text>
             </Pressable>
@@ -686,7 +734,7 @@ const s = StyleSheet.create({
   shopCatItem: {
     alignItems: "center",
     gap: 8,
-    width: 90,
+    width: 84,
   },
   shopCatTile: {
     width: 70,

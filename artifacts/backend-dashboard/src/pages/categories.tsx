@@ -30,6 +30,7 @@ import { apiFetch } from "@/lib/api";
 type SubCat = {
   id: number; name: string; slug: string; icon: string;
   accentColor: string; isActive: boolean; sortOrder: number; parentId: number | null;
+  type?: string;
 };
 type Cat = SubCat & { subCategories: SubCat[] };
 
@@ -42,7 +43,12 @@ const BUSINESS_TYPES = [
   { value: "services",   label: "Services / Coursier" },
 ];
 
-const EMPTY = { name: "", icon: "storefront", accentColor: "#E91E63", sortOrder: "0", isActive: true, businessType: "restaurant", bannerImageUrl: "" };
+const CATEGORY_TYPES = [
+  { value: "category",          label: "Catégorie principale" },
+  { value: "service_shortcut",  label: "Raccourci Service (tuile accueil)" },
+];
+
+const EMPTY = { name: "", icon: "storefront", accentColor: "#E91E63", sortOrder: "0", isActive: true, businessType: "restaurant", type: "category", bannerImageUrl: "" };
 
 function CategoryForm({
   value, onChange, isSubcat = false,
@@ -59,20 +65,34 @@ function CategoryForm({
         <Label className="text-xs">Nom *</Label>
         <Input value={value.name} onChange={set("name")} placeholder="Ex: Pizza, Burger…" required autoFocus />
       </div>
-      {/* businessType — only relevant for parent categories */}
+      {/* type + businessType — only relevant for parent categories */}
       {!isSubcat && (
-        <div className="space-y-1">
-          <Label className="text-xs">Type de commerce</Label>
-          <select
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-            value={value.businessType}
-            onChange={(e) => onChange({ ...value, businessType: e.target.value })}
-          >
-            {BUSINESS_TYPES.map((bt) => (
-              <option key={bt.value} value={bt.value}>{bt.label}</option>
-            ))}
-          </select>
-        </div>
+        <>
+          <div className="space-y-1">
+            <Label className="text-xs">Rôle dans l'app</Label>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+              value={value.type}
+              onChange={(e) => onChange({ ...value, type: e.target.value })}
+            >
+              {CATEGORY_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Type de commerce</Label>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+              value={value.businessType}
+              onChange={(e) => onChange({ ...value, businessType: e.target.value })}
+            >
+              {BUSINESS_TYPES.map((bt) => (
+                <option key={bt.value} value={bt.value}>{bt.label}</option>
+              ))}
+            </select>
+          </div>
+        </>
       )}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
@@ -152,6 +172,7 @@ export default function Categories() {
           sortOrder: Number(createForm.sortOrder) || 0,
           isActive: createForm.isActive,
           businessType: createForm.businessType || "restaurant",
+          type: parentId ? "subcategory" : (createForm.type || "category"),
           bannerImageUrl: createForm.bannerImageUrl?.trim() || null,
           parentId: parentId ?? null,
         }),
@@ -177,6 +198,7 @@ export default function Categories() {
           sortOrder: Number(editForm.sortOrder) || 0,
           isActive: editForm.isActive,
           businessType: editForm.businessType || "restaurant",
+          type: editForm.type || "category",
           bannerImageUrl: editForm.bannerImageUrl?.trim() || null,
         }),
       }),
@@ -205,6 +227,7 @@ export default function Categories() {
       sortOrder: String(cat.sortOrder),
       isActive: cat.isActive,
       businessType: (cat as any).businessType ?? "restaurant",
+      type: cat.type ?? "category",
       bannerImageUrl: (cat as any).bannerImageUrl ?? "",
     });
     setEditing(cat);

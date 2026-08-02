@@ -99,7 +99,6 @@ export default function OrdersScreen() {
         <WaveEdge
           color={PINK_DEEP}
           height={28}
-          gradientStops={[{ offset: 0, color: PINK }, { offset: 1, color: PINK_DEEP }]}
         />
       </View>
 

@@ -344,8 +344,8 @@ export default function CategoryScreen() {
               ))}
             </Animated.ScrollView>
 
-            {/* ─── VIP / Promo partners horizontal slider (Talabat style) ─── */}
-            {vipPartners.length > 0 && (
+            {/* ─── VIP / Promo partners — only at parent-category level, hidden in subcategory view ─── */}
+            {vipPartners.length > 0 && activeSubId === "all" && (
               <Animated.View entering={FadeInDown.delay(260).duration(550).springify()} style={styles.vipSection}>
                 <View style={styles.vipHeader}>
                   <Text style={styles.vipTitle}>Partenaires VIP & Promotions</Text>
