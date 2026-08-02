@@ -96,8 +96,8 @@ export default function OrdersScreen() {
             ))}
           </View>
         </LinearGradient>
-        {/* Wave colour matches body background so the transition is seamless */}
-        <WaveEdge color="#F8F8F8" height={28} />
+        {/* Wave colour matches the gradient's deepest pink so the header edge is continuous */}
+        <WaveEdge color={PINK_DEEP} height={28} />
       </View>
 
       {!token ? (

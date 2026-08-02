@@ -226,7 +226,7 @@ Le JWT est conservé entre les sessions. L'utilisateur reste connecté jusqu'à 
 ## 11. Administration du contenu (backend)
 
 > **URL** : `https://ma.jatek.app/admin`  
-> **Identifiants** : `rbelmahi90@gmail.com` / `000000`
+> **Identifiants** : à récupérer auprès de l'administrateur système (ne pas stocker dans ce fichier)
 
 ### Gérer les catégories
 
