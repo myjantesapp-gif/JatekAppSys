@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Jatek pre-commit: block commit if lockfile is out of sync
+. "$(dirname -- "$0")/_/husky.sh"
+
+if ! pnpm install --frozen-lockfile --prefer-offline > /dev/null 2>&1; then
+  echo "❌ pnpm-lock.yaml is out of sync. Run 'pnpm install' and add pnpm-lock.yaml to your commit."
+  exit 1
+fi
+echo "✔ Lockfile check passed"

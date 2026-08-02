@@ -342,6 +342,7 @@ export default function CategoryScreen() {
               entering={FadeInDown.delay(160).duration(500).springify()}
               horizontal
               showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled
               style={styles.subcatScroll}
               contentContainerStyle={styles.subcatContent}
             >
@@ -365,6 +366,7 @@ export default function CategoryScreen() {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  nestedScrollEnabled
                   contentContainerStyle={styles.vipRow}
                 >
                   {vipPartners.map((p, i) => (

@@ -324,6 +324,7 @@ export default function HomeScreen() {
         style={s.scroll}
         contentContainerStyle={{ paddingBottom: tabBarPad + 72 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* ─── Pink header with wavy bottom edge ─── */}
         <View style={s.headerWrap}>

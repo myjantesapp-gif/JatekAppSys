@@ -96,11 +96,8 @@ export default function OrdersScreen() {
             ))}
           </View>
         </LinearGradient>
-        <WaveEdge
-          color={PINK_DEEP}
-          height={28}
-          gradientStops={[{ offset: 0, color: PINK }, { offset: 1, color: PINK_DEEP }]}
-        />
+        {/* Wave colour matches body background so the transition is seamless */}
+        <WaveEdge color="#F8F8F8" height={28} />
       </View>
 
       {!token ? (
@@ -174,14 +171,16 @@ const styles = StyleSheet.create({
   },
 
   // Filters
-  filterRow: { flexDirection: "row", gap: 8 },
+  filterRow: { flexDirection: "row", gap: 8, flexWrap: "nowrap" },
   filterPill: {
-    paddingHorizontal: 18,
+    flexShrink: 1,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.15)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.3)",
+    alignItems: "center",
   },
   filterPillActive: {
     backgroundColor: "#fff",
@@ -197,6 +196,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     color: "rgba(255,255,255,0.9)",
     letterSpacing: 0.2,
+    flexShrink: 1,
   },
   filterLabelActive: {
     color: PINK,

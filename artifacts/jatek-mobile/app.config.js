@@ -1,11 +1,11 @@
 /** @type {import('expo/config').ConfigContext} */
 module.exports = ({ config }) => {
-  const slug = process.env.EXPO_SLUG ?? "jatek-mobile";
-  const owner = process.env.EXPO_OWNER ?? "myjantes";
+  const slug = process.env.EXPO_SLUG ?? "jatekclient";
+  const owner = process.env.EXPO_OWNER ?? "rbe2656s-team";
   const projectId =
     process.env.EXPO_PUBLIC_PROJECT_ID ??
     process.env.DEFAULT_PROJECT_ID ??
-    "24f32081-ec5b-4040-9694-24e08de7e7c7";
+    "f30be777-7e22-4b16-b0fc-cf4373432b6f";
 
   return {
     ...config,

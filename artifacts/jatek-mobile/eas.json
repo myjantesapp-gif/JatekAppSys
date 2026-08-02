@@ -9,10 +9,10 @@
       "distribution": "internal",
       "credentialsSource": "remote",
       "env": {
-        "EXPO_PUBLIC_PROJECT_ID": "11e89fef-b97e-4823-ba4a-07c2942ba6b0",
+        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "myjantesapps-team",
+        "EXPO_OWNER": "rbe2656s-team",
         "EXPO_SLUG": "jatekclient"
       },
       "android": {
@@ -26,9 +26,9 @@
       "credentialsSource": "remote",
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "11e89fef-b97e-4823-ba4a-07c2942ba6b0",
+        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "myjantesapps-team",
+        "EXPO_OWNER": "rbe2656s-team",
         "EXPO_SLUG": "jatekclient"
       },
       "android": {
@@ -41,9 +41,9 @@
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "11e89fef-b97e-4823-ba4a-07c2942ba6b0",
+        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "myjantesapps-team",
+        "EXPO_OWNER": "rbe2656s-team",
         "EXPO_SLUG": "jatekclient"
       },
       "android": {
