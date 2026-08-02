@@ -1,34 +1,31 @@
-# EAS build archive — exclude everything not needed for the mobile build
-# This reduces the upload from ~160 MB to a few MB.
+# EAS build archive — exclude content not needed for the mobile build.
+# The mobile app depends on lib/api-client-react (workspace:*) so lib/ must
+# stay in the archive. Only exclude lib packages that are server-only.
 
-# Other artifacts (not needed for the mobile build)
+# Other artifacts (not mobile)
 artifacts/api-server/
 artifacts/backend-dashboard/
 artifacts/jatek-landing/
 artifacts/jatek-driver/
 artifacts/mockup-sandbox/
 
-# Build outputs
+# Server-only lib packages (not imported by the mobile app)
+lib/db/
+lib/object-storage-web/
+
+# Build outputs & generated files
 artifacts/jatek-mobile/dist/
 artifacts/jatek-mobile/.expo/
 artifacts/jatek-mobile/server/
+dist/
 
-# Lib packages (bundled via Metro from node_modules, not from source)
-lib/
-
-# Root tooling
+# Root tooling & local agent files
 .husky/
 .local/
+.agents/
 screenshots/
-scripts/
-
-# Node modules (EAS installs them fresh)
-node_modules/
 
 # Misc
 *.log
-*.md
-!artifacts/jatek-mobile/README.md
 .git/
 .cache/
-dist/

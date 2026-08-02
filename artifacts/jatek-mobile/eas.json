@@ -1,0 +1,60 @@
+{
+  "cli": {
+    "version": ">= 14.7.1",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "autoIncrement": true,
+      "credentialsSource": "remote",
+      "env": {
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
+        "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
+        "EXPO_OWNER": "rbe2656s-team",
+        "EXPO_SLUG": "jatekclient"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "autoIncrement": true,
+      "channel": "preview",
+      "credentialsSource": "remote",
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
+        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_OWNER": "rbe2656s-team",
+        "EXPO_SLUG": "jatekclient"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "credentialsSource": "remote",
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
+        "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
+        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_OWNER": "rbe2656s-team",
+        "EXPO_SLUG": "jatekclient"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

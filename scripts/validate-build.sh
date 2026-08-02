@@ -26,7 +26,7 @@ check "pnpm-lock.yaml present at root" test -f pnpm-lock.yaml
 check "No package-lock.json" bash -c '! find . -name "package-lock.json" -not -path "*/node_modules/*" -not -path "*/.cache/*" | grep -q .'
 check "No yarn.lock" bash -c '! find . -name "yarn.lock" -not -path "*/node_modules/*" | grep -q .'
 check "No bun.lockb" bash -c '! find . -name "bun.lockb" -not -path "*/node_modules/*" | grep -q .'
-check "No duplicate eas.json in jatek-mobile" bash -c '! test -f artifacts/jatek-mobile/eas.json'
+
 
 # ── 2. pnpm version ────────────────────────────────────────
 echo -e "\n── pnpm version ──"
@@ -58,9 +58,10 @@ check "artifacts/jatek-mobile/package.json" test -f artifacts/jatek-mobile/packa
 check "artifacts/jatek-landing/package.json" test -f artifacts/jatek-landing/package.json
 check "artifacts/backend-dashboard/package.json" test -f artifacts/backend-dashboard/package.json
 
-# ── 6. EAS config (single authoritative file at root) ─────
+# ── 6. EAS config ─────────────────────────────────────────
 echo -e "\n── EAS config ──"
 check "eas.json present at root" test -f eas.json
+check "eas.json present in artifacts/jatek-mobile" test -f artifacts/jatek-mobile/eas.json
 check "app.config.js present" test -f artifacts/jatek-mobile/app.config.js
 check ".easignore present" test -f .easignore
 check "PNPM_VERSION set in root eas.json" node -e "
@@ -69,18 +70,18 @@ check "PNPM_VERSION set in root eas.json" node -e "
   const ok=profiles.some(p=>p.env&&p.env.PNPM_VERSION);
   process.exit(ok?0:1)
 "
-check "appRoot points to jatek-mobile in root eas.json" node -e "
-  const e=require('./eas.json');
-  const ok=e.cli&&e.cli.appRoot==='artifacts/jatek-mobile';
+check "PNPM_VERSION set in mobile eas.json" node -e "
+  const e=require('./artifacts/jatek-mobile/eas.json');
+  const profiles=Object.values(e.build||{});
+  const ok=profiles.some(p=>p.env&&p.env.PNPM_VERSION);
   process.exit(ok?0:1)
 "
 
-# ── 7. Lockfile integrity (non-mutating) ───────────────────
-echo -e "\n── Lockfile integrity ──"
-# Verify the lockfile is non-empty and parseable (no full install needed).
-check "pnpm-lock.yaml non-empty" bash -c '[ -s pnpm-lock.yaml ]'
-check "pnpm-lock.yaml readable by pnpm" bash -c 'pnpm ls --depth 0 --frozen-lockfile 2>&1 | grep -qv "ERR_PNPM_NO_LOCKFILE"'
-# Note: staged-file drift detection runs in the pre-commit hook, not here.
+# ── 7. Frozen lockfile ─────────────────────────────────────
+# Runs pnpm install --frozen-lockfile to confirm the lockfile is consistent.
+# This is the canonical check used by EAS build workers.
+echo -e "\n── Frozen lockfile ──"
+check "pnpm install --frozen-lockfile passes" pnpm install --frozen-lockfile --prefer-offline
 
 # ── Summary ────────────────────────────────────────────────
 echo ""
