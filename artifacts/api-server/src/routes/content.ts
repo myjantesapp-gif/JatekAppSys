@@ -17,16 +17,30 @@ router.get("/categories", async (req, res): Promise<void> => {
     .where(eq(categoriesTable.isActive, true))
     .orderBy(asc(categoriesTable.sortOrder));
 
-  // Apply optional filters on the in-memory result (table is small)
+  // Apply type / businessType filters
   let filtered = all;
   if (typeFilter) filtered = filtered.filter((c) => c.type === typeFilter);
   if (btFilter)   filtered = filtered.filter((c) => c.businessType === btFilter);
+
   if (parentIdFilter !== undefined) {
+    // Explicit parentId filter: return matching rows directly (flat list).
+    // parentId=null or "" → top-level parents; parentId=<N> → children of that parent.
     const pid = parentIdFilter === "null" || parentIdFilter === "" ? null : Number(parentIdFilter);
-    filtered = filtered.filter((c) => c.parentId === pid);
+    const rows = filtered.filter((c) => c.parentId === pid);
+    if (pid === null) {
+      // Return top-level parents with nested subCategories from the full set
+      res.json(rows.map((p) => ({
+        ...p,
+        subCategories: all.filter((c) => c.parentId === p.id && c.isActive),
+      })));
+    } else {
+      // Return children flat (no further nesting)
+      res.json(rows);
+    }
+    return;
   }
 
-  // Build hierarchy: parents with nested subCategories[]
+  // Default (no parentId filter): return full hierarchy — parents with nested subCategories[]
   const parents = filtered.filter((c) => !c.parentId);
   const result = parents.map((p) => ({
     ...p,
