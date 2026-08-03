@@ -271,7 +271,7 @@ function PermissionsDialog({ target, onClose, onSaved }: { target: StaffUser | n
     if (!target) return;
     setInherited(target.permissions?.inheritedRoles ?? []);
     setGrants(target.permissions?.grants ?? []);
-    apiFetch<PermissionDef[]>("/backend/permissions").then(setPerms).catch(() => setPerms([]));
+    apiFetch<PermissionDef[]>("/api/backend/permissions").then(setPerms).catch(() => setPerms([]));
   }, [target?.id]);
 
   if (!target) return null;
@@ -287,7 +287,7 @@ function PermissionsDialog({ target, onClose, onSaved }: { target: StaffUser | n
   const save = async () => {
     setSaving(true);
     try {
-      await apiFetch(`/backend/staff/${target.id}/permissions`, { method: "PATCH", body: JSON.stringify({ inheritedRoles: inherited, grants }) });
+      await apiFetch(`/api/backend/staff/${target.id}/permissions`, { method: "PATCH", body: JSON.stringify({ inheritedRoles: inherited, grants }) });
       onSaved();
     } catch (e: any) {
       alert(e?.message ?? "Erreur");
@@ -298,7 +298,7 @@ function PermissionsDialog({ target, onClose, onSaved }: { target: StaffUser | n
     if (!confirm("Réinitialiser et restaurer le rôle de base 'employee' ?")) return;
     setSaving(true);
     try {
-      await apiFetch(`/backend/staff/${target.id}/permissions`, { method: "PATCH", body: JSON.stringify({ permissions: null, baseRole: "employee" }) });
+      await apiFetch(`/api/backend/staff/${target.id}/permissions`, { method: "PATCH", body: JSON.stringify({ permissions: null, baseRole: "employee" }) });
       onSaved();
     } catch (e: any) { alert(e?.message ?? "Erreur"); }
     finally { setSaving(false); }

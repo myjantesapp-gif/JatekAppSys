@@ -98,7 +98,9 @@ router.get("/shorts", async (_req, res): Promise<void> => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// ADMIN — Categories CRUD
+// ADMIN — Categories (read-all, including inactive)
+// Note: POST/PATCH/DELETE for categories are handled by backend.ts.
+//       POST/PATCH/DELETE for ads are handled by backendAdmin.ts.
 // ─────────────────────────────────────────────────────────────
 
 async function requireAdmin(req: AuthedRequest, res: any): Promise<boolean> {
@@ -110,6 +112,7 @@ async function requireAdmin(req: AuthedRequest, res: any): Promise<boolean> {
   return true;
 }
 
+/** GET /backend/categories/all — returns ALL categories (including inactive) for the admin UI. */
 router.get("/backend/categories/all", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
   if (!await requireAdmin(req, res)) return;
   const all = await db.select().from(categoriesTable).orderBy(asc(categoriesTable.sortOrder));
@@ -119,109 +122,6 @@ router.get("/backend/categories/all", requireAuth, async (req: AuthedRequest, re
     subCategories: all.filter((c) => c.parentId === p.id),
   }));
   res.json(result);
-});
-
-router.post("/backend/categories", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (!await requireAdmin(req, res)) return;
-  const { name, slug, icon, accentColor, parentId, businessType, type, bannerImageUrl, isActive, sortOrder } = req.body ?? {};
-  if (!name || !slug) { res.status(400).json({ error: "name and slug required" }); return; }
-  const [row] = await db.insert(categoriesTable).values({
-    name,
-    slug: String(slug).toLowerCase().replace(/\s+/g, "-"),
-    icon: icon ?? "storefront",
-    accentColor: accentColor ?? "#E91E63",
-    parentId: parentId ?? null,
-    businessType: businessType ?? "restaurant",
-    type: type ?? "category",
-    bannerImageUrl: bannerImageUrl ?? null,
-    isActive: isActive !== false,
-    sortOrder: sortOrder ?? 0,
-  }).returning();
-  res.status(201).json(row);
-});
-
-router.patch("/backend/categories/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (!await requireAdmin(req, res)) return;
-  const id = Number(req.params.id);
-  const { name, slug, icon, accentColor, parentId, businessType, type, bannerImageUrl, isActive, sortOrder } = req.body ?? {};
-  const updates: Record<string, any> = {};
-  if (name !== undefined) updates.name = name;
-  if (slug !== undefined) updates.slug = String(slug).toLowerCase().replace(/\s+/g, "-");
-  if (icon !== undefined) updates.icon = icon;
-  if (accentColor !== undefined) updates.accentColor = accentColor;
-  if (parentId !== undefined) updates.parentId = parentId;
-  if (businessType !== undefined) updates.businessType = businessType;
-  if (type !== undefined) updates.type = type;
-  if (bannerImageUrl !== undefined) updates.bannerImageUrl = bannerImageUrl;
-  if (isActive !== undefined) updates.isActive = isActive;
-  if (sortOrder !== undefined) updates.sortOrder = sortOrder;
-  const [row] = await db.update(categoriesTable).set(updates).where(eq(categoriesTable.id, id)).returning();
-  if (!row) { res.status(404).json({ error: "Not found" }); return; }
-  res.json(row);
-});
-
-router.delete("/backend/categories/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (!await requireAdmin(req, res)) return;
-  const id = Number(req.params.id);
-
-  // Guard: prevent deleting a parent category that still has subcategories
-  const children = await db.select({ id: categoriesTable.id }).from(categoriesTable).where(eq(categoriesTable.parentId, id)).limit(1);
-  if (children.length > 0) {
-    res.status(409).json({ error: "Impossible de supprimer : cette catégorie a des sous-catégories. Supprimez-les d'abord." });
-    return;
-  }
-
-  await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
-  res.status(204).end();
-});
-
-// ─────────────────────────────────────────────────────────────
-// ADMIN — Ads CRUD
-// ─────────────────────────────────────────────────────────────
-
-router.get("/backend/ads", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (!await requireAdmin(req, res)) return;
-  const rows = await db.select().from(adsTable).orderBy(asc(adsTable.sortOrder));
-  res.json(rows);
-});
-
-router.post("/backend/ads", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (!await requireAdmin(req, res)) return;
-  const { type, title, subtitle, badge, bgColor, accentColor, icon, imageUrl, linkUrl, isActive, sortOrder } = req.body ?? {};
-  if (!title) { res.status(400).json({ error: "title required" }); return; }
-  const [row] = await db.insert(adsTable).values({
-    type: type ?? "vip_banner",
-    title,
-    subtitle: subtitle ?? null,
-    badge: badge ?? null,
-    bgColor: bgColor ?? "#E91E63",
-    accentColor: accentColor ?? null,
-    icon: icon ?? "star",
-    imageUrl: imageUrl ?? null,
-    linkUrl: linkUrl ?? null,
-    isActive: isActive !== false,
-    sortOrder: sortOrder ?? 0,
-  }).returning();
-  res.status(201).json(row);
-});
-
-router.patch("/backend/ads/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (!await requireAdmin(req, res)) return;
-  const id = Number(req.params.id);
-  const updates: Record<string, any> = {};
-  const fields = ["type", "title", "subtitle", "badge", "bgColor", "accentColor", "icon", "imageUrl", "linkUrl", "isActive", "sortOrder"];
-  for (const f of fields) {
-    if (req.body?.[f] !== undefined) updates[f] = req.body[f];
-  }
-  const [row] = await db.update(adsTable).set(updates).where(eq(adsTable.id, id)).returning();
-  if (!row) { res.status(404).json({ error: "Not found" }); return; }
-  res.json(row);
-});
-
-router.delete("/backend/ads/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (!await requireAdmin(req, res)) return;
-  await db.delete(adsTable).where(eq(adsTable.id, Number(req.params.id)));
-  res.status(204).end();
 });
 
 // ─────────────────────────────────────────────────────────────
