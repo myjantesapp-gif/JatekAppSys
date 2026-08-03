@@ -106,12 +106,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: PINK,
         tabBarInactiveTintColor: INACTIVE,
         headerShown: false,
-        tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontFamily: "Inter_600SemiBold",
-          fontSize: 11,
-          marginTop: 2,
-        },
+        tabBarShowLabel: false,
         tabBarItemStyle: { paddingTop: 6 },
         tabBarStyle: {
           backgroundColor: "#FFFFFF",

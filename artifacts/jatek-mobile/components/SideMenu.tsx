@@ -9,43 +9,39 @@ import {
   Easing,
   Pressable,
   Dimensions,
-  Image,
   Platform,
   ScrollView,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/contexts/AuthContext";
 
-const PINK = "#FF4593";
+const PINK      = "#FF4593";
 const PINK_DEEP = "#E91E63";
 const TURQUOISE = "#00BFA6";
-const YELLOW = "#FFC107";
-const PURPLE = "#7B61FF";
-const ORANGE = "#FF7A45";
-const INK = "#0A1B3D";
+const YELLOW    = "#FFC107";
+const PURPLE    = "#7B61FF";
+const ORANGE    = "#FF7A45";
+
+const DRAWER_W = 80;
 
 interface MenuEntry {
   id: string;
-  label: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
   route: string;
-  emoji?: string;
 }
 
 const ENTRIES: MenuEntry[] = [
-  { id: "cart", label: "Mon panier", icon: "cart", color: PINK_DEEP, route: "/cart", emoji: "🛒" },
-  { id: "fav", label: "Mes favoris", icon: "heart", color: PINK, route: "/profile/favorites", emoji: "❤️" },
-  { id: "promo", label: "Promos & coupons", icon: "pricetag", color: ORANGE, route: "/profile/coupons", emoji: "🔥" },
-  { id: "orders", label: "Mes commandes", icon: "bag-handle", color: TURQUOISE, route: "/(tabs)/orders", emoji: "🛍️" },
-  { id: "rewards", label: "Récompenses", icon: "gift", color: YELLOW, route: "/profile/coupons", emoji: "🎁" },
-  { id: "addresses", label: "Mes adresses", icon: "location", color: PURPLE, route: "/profile/addresses", emoji: "📍" },
-  { id: "help", label: "Aide & support", icon: "chatbubbles", color: "#0EA5E9", route: "/profile/help", emoji: "💬" },
+  { id: "cart",      icon: "cart",              color: PINK_DEEP, route: "/cart" },
+  { id: "fav",       icon: "heart",             color: PINK,      route: "/profile/favorites" },
+  { id: "promo",     icon: "pricetag",          color: ORANGE,    route: "/profile/coupons" },
+  { id: "orders",    icon: "bag-handle",        color: TURQUOISE, route: "/(tabs)/orders" },
+  { id: "rewards",   icon: "gift",              color: YELLOW,    route: "/profile/coupons" },
+  { id: "addresses", icon: "location",          color: PURPLE,    route: "/profile/addresses" },
+  { id: "help",      icon: "chatbubbles",       color: "#0EA5E9", route: "/profile/help" },
 ];
 
 interface Props {
@@ -54,45 +50,24 @@ interface Props {
 }
 
 export function SideMenu({ visible, onClose }: Props) {
-  const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const screenW = Dimensions.get("window").width;
-  const drawerW = Math.min(320, screenW * 0.86);
-  const slide = useRef(new Animated.Value(-drawerW)).current;
+  const colors  = useColors();
+  const insets  = useSafeAreaInsets();
+  const slide   = useRef(new Animated.Value(-DRAWER_W)).current;
   const overlay = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       Animated.parallel([
-        Animated.timing(slide, {
-          toValue: 0,
-          duration: 320,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(overlay, {
-          toValue: 1,
-          duration: 240,
-          useNativeDriver: true,
-        }),
+        Animated.timing(slide,   { toValue: 0,         duration: 300, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(overlay, { toValue: 1,         duration: 220, useNativeDriver: true }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(slide, {
-          toValue: -drawerW,
-          duration: 220,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(overlay, {
-          toValue: 0,
-          duration: 180,
-          useNativeDriver: true,
-        }),
+        Animated.timing(slide,   { toValue: -DRAWER_W, duration: 220, easing: Easing.in(Easing.cubic),  useNativeDriver: true }),
+        Animated.timing(overlay, { toValue: 0,         duration: 180, useNativeDriver: true }),
       ]).start();
     }
-  }, [visible, drawerW, slide, overlay]);
+  }, [visible, slide, overlay]);
 
   const handleNav = (route: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -109,70 +84,60 @@ export function SideMenu({ visible, onClose }: Props) {
       statusBarTranslucent={Platform.OS === "android"}
     >
       <View style={styles.root}>
+        {/* dim overlay */}
         <Animated.View style={[styles.overlay, { opacity: overlay }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
+        {/* compact icon rail */}
         <Animated.View
           style={[
             styles.drawer,
             {
-              width: drawerW,
               backgroundColor: colors.background,
               transform: [{ translateX: slide }],
             },
           ]}
         >
-          {/* Brand header */}
-          <View style={[styles.brandHeader, { paddingTop: insets.top + 18 }]}>
-            <View style={styles.brandRow}>
-              <View style={styles.brandBadge}>
-                <Text style={styles.brandBadgeText}>J.</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.brandName, { color: colors.heading }]}>Jatek</Text>
-                <Text style={[styles.brandTag, { color: colors.mutedForeground }]}>
-                  {user ? `Hey ${user.name?.split(" ")[0] ?? ""}` : "Bienvenue"}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} hitSlop={10} style={[styles.closeBtn, { borderColor: colors.border }]}>
-                <Ionicons name="close" size={18} color={colors.mutedForeground} />
-              </TouchableOpacity>
+          {/* top: J. logo + close */}
+          <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
+            <View style={styles.logoBadge}>
+              <Text style={styles.logoText}>J.</Text>
             </View>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={10}
+              style={[styles.closeBtn, { borderColor: colors.border }]}
+            >
+              <Ionicons name="close" size={16} color={colors.mutedForeground} />
+            </TouchableOpacity>
           </View>
 
-          {/* Items — scrollable so they never clip behind nav bar */}
+          {/* icon list */}
           <ScrollView
-            style={styles.itemsScroll}
-            contentContainerStyle={[
-              styles.itemsWrap,
-              { paddingBottom: insets.bottom + 16 },
-            ]}
+            style={styles.scroll}
+            contentContainerStyle={[styles.itemsWrap, { paddingBottom: insets.bottom + 16 }]}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
             {ENTRIES.map((entry, i) => (
-              <DrawerItem
+              <IconItem
                 key={entry.id}
                 entry={entry}
                 index={i}
                 visible={visible}
                 onPress={() => handleNav(entry.route)}
-                textColor={colors.heading}
-                subColor={colors.mutedForeground}
               />
             ))}
 
-            {/* Footer inside scroll so it's never clipped */}
-            <View style={styles.footer}>
+            {/* settings at bottom */}
+            <View style={{ marginTop: 20 }}>
               <TouchableOpacity
                 onPress={() => handleNav("/profile/info" as any)}
-                style={[styles.footerBtn, { borderColor: colors.border }]}
+                style={styles.settingsBtn}
               >
-                <Ionicons name="settings-outline" size={18} color={colors.mutedForeground} />
-                <Text style={[styles.footerBtnText, { color: colors.mutedForeground }]}>Paramètres</Text>
+                <Ionicons name="settings-outline" size={22} color={colors.mutedForeground} />
               </TouchableOpacity>
-              <Text style={[styles.versionText, { color: colors.mutedForeground }]}>Jatek v1.0 · Made with 💛</Text>
             </View>
           </ScrollView>
         </Animated.View>
@@ -181,31 +146,27 @@ export function SideMenu({ visible, onClose }: Props) {
   );
 }
 
-function DrawerItem({
+function IconItem({
   entry,
   index,
   visible,
   onPress,
-  textColor,
-  subColor,
 }: {
   entry: MenuEntry;
   index: number;
   visible: boolean;
   onPress: () => void;
-  textColor: string;
-  subColor: string;
 }) {
-  const enter = useRef(new Animated.Value(0)).current;
-  const press = useRef(new Animated.Value(1)).current;
+  const enter  = useRef(new Animated.Value(0)).current;
+  const press  = useRef(new Animated.Value(1)).current;
   const wobble = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       Animated.timing(enter, {
         toValue: 1,
-        duration: 360,
-        delay: 80 + index * 50,
+        duration: 340,
+        delay: 60 + index * 45,
         easing: Easing.out(Easing.back(1.4)),
         useNativeDriver: true,
       }).start();
@@ -215,121 +176,105 @@ function DrawerItem({
   }, [visible, index, enter]);
 
   const handlePressIn = () => {
-    Animated.spring(press, { toValue: 0.94, useNativeDriver: true, friction: 5 }).start();
+    Animated.spring(press, { toValue: 0.88, useNativeDriver: true, friction: 5 }).start();
     Animated.sequence([
-      Animated.timing(wobble, { toValue: 1, duration: 80, useNativeDriver: true }),
-      Animated.timing(wobble, { toValue: -1, duration: 80, useNativeDriver: true }),
-      Animated.timing(wobble, { toValue: 0, duration: 80, useNativeDriver: true }),
+      Animated.timing(wobble, { toValue: 1,  duration: 70, useNativeDriver: true }),
+      Animated.timing(wobble, { toValue: -1, duration: 70, useNativeDriver: true }),
+      Animated.timing(wobble, { toValue: 0,  duration: 70, useNativeDriver: true }),
     ]).start();
   };
-  const handlePressOut = () => {
+  const handlePressOut = () =>
     Animated.spring(press, { toValue: 1, useNativeDriver: true, friction: 4 }).start();
-  };
 
-  const translateX = enter.interpolate({ inputRange: [0, 1], outputRange: [-30, 0] });
-  const opacity = enter;
-  const rotate = wobble.interpolate({ inputRange: [-1, 1], outputRange: ["-12deg", "12deg"] });
+  const translateX = enter.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] });
+  const rotate     = wobble.interpolate({ inputRange: [-1, 1], outputRange: ["-14deg", "14deg"] });
 
   return (
     <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
       <Animated.View
         style={[
           styles.itemRow,
-          { transform: [{ translateX }, { scale: press }], opacity },
+          { opacity: enter, transform: [{ translateX }, { scale: press }] },
         ]}
       >
         <Animated.View
           style={[
-            styles.iconChip,
-            { backgroundColor: entry.color + "1F", transform: [{ rotate }] },
+            styles.chip,
+            { backgroundColor: entry.color + "20", transform: [{ rotate }] },
           ]}
         >
-          <Ionicons name={entry.icon} size={18} color={entry.color} />
+          <Ionicons name={entry.icon} size={22} color={entry.color} />
         </Animated.View>
-        <Text style={[styles.itemLabel, { color: textColor }]}>{entry.label}</Text>
-        <Ionicons name="chevron-forward" size={16} color={subColor} />
       </Animated.View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, flexDirection: "row" },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(10,27,61,0.55)" },
+  root:    { flex: 1, flexDirection: "row" },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(10,27,61,0.52)" },
+
   drawer: {
     position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    borderTopRightRadius: 28,
-    borderBottomRightRadius: 28,
+    left: 0, top: 0, bottom: 0,
+    width: DRAWER_W,
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
     shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    shadowOffset: { width: 6, height: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    shadowOffset: { width: 5, height: 0 },
     elevation: 16,
-    // No overflow:hidden here — it was clipping text and content near border-radius edges
   },
-  brandHeader: {
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 18,
+
+  header: {
+    alignItems: "center",
+    paddingBottom: 14,
+    gap: 10,
   },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  brandBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: PINK + "15",
+  logoBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    backgroundColor: PINK_DEEP + "18",
     alignItems: "center",
     justifyContent: "center",
   },
-  brandBadgeText: {
+  logoText: {
     fontFamily: "Inter_700Bold",
-    fontSize: 16,
+    fontSize: 17,
     color: PINK_DEEP,
     fontStyle: "italic",
   },
-  brandName: { fontFamily: "Inter_700Bold", fontSize: 18, letterSpacing: -0.4 },
-  brandTag: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1 },
   closeBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
   },
 
-  itemsScroll: { flex: 1 },
-  itemsWrap: { paddingHorizontal: 10, paddingTop: 4, gap: 2 },
+  scroll:    { flex: 1 },
+  itemsWrap: { alignItems: "center", gap: 6, paddingTop: 4 },
+
   itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    paddingVertical: 11,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-  },
-  iconChip: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  itemLabel: { fontFamily: "Inter_500Medium", fontSize: 14, letterSpacing: -0.1, flex: 1 },
-
-  footer: { marginTop: 20, paddingHorizontal: 8, gap: 10 },
-  footerBtn: {
-    flexDirection: "row",
+  chip: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
+    justifyContent: "center",
   },
-  footerBtnText: { fontFamily: "Inter_500Medium", fontSize: 13 },
-  versionText: { fontFamily: "Inter_400Regular", fontSize: 10.5, textAlign: "center", opacity: 0.7 },
+
+  settingsBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

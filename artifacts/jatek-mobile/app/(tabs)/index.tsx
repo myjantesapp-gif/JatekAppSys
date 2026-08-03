@@ -33,6 +33,7 @@ import { ShortPlayerModal } from "@/components/ShortPlayerModal";
 import { AddressQuickPicker } from "@/components/AddressQuickPicker";
 import { JatekOffersPanel } from "@/components/JatekOffersPanel";
 import { CartPreviewSheet } from "@/components/CartPreviewSheet";
+import { SideMenu } from "@/components/SideMenu";
 
 function trackBannerClick(restaurantId: number) {
   try {
@@ -246,6 +247,7 @@ export default function HomeScreen() {
   const [shortsVisible, setShortsVisible] = useState(false);
   const [initialShort, setInitialShort] = useState(0);
   const [cartSheetVisible, setCartSheetVisible] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const params = useMemo<ListRestaurantsParams>(() => {
     const p: ListRestaurantsParams = { businessType: activeBusinessType };
@@ -334,33 +336,46 @@ export default function HomeScreen() {
               { paddingTop: insets.top + 12 },
             ]}
           >
-            {/* Top row: location + avatar */}
+            {/* Top row: menu + Jatek logo + orders + profile */}
             <View style={s.headerTopRow}>
-              <TouchableOpacity activeOpacity={0.8} style={s.locRow} onPress={() => setAddressPickerOpen(true)}>
-                <Ionicons name="location-sharp" size={18} color="#fff" />
-                <Text style={s.locTxt} numberOfLines={1}>
-                  Livraison en{" "}
-                  <Text style={s.locTxtBold}>
-                    {addressLabel.replace("Livraison en ", "")}
-                  </Text>
-                </Text>
-                <Ionicons name="chevron-down" size={16} color="#fff" />
+              {/* hamburger — opens side menu */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={s.iconBtn}
+                onPress={() => setMenuOpen(true)}
+                accessibilityLabel="Ouvrir le menu"
+              >
+                <Ionicons name="menu" size={24} color="#fff" />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                activeOpacity={0.85}
-                style={s.cartBtn}
-                onPress={() => setCartSheetVisible(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Voir le panier"
-              >
-                <Ionicons name="bag-handle" size={20} color={PINK} />
-                {itemCount > 0 && (
-                  <View style={s.cartBadge}>
-                    <Text style={s.cartBadgeTxt}>{itemCount > 9 ? "9+" : itemCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              {/* Jatek logo centre */}
+              <Text style={s.headerLogo}>Jatek</Text>
+
+              {/* right actions */}
+              <View style={s.headerActions}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={s.iconBtn}
+                  onPress={() => router.push("/(tabs)/orders" as any)}
+                  accessibilityLabel="Mes commandes"
+                >
+                  <Ionicons name="bag-handle" size={22} color="#fff" />
+                  {itemCount > 0 && (
+                    <View style={s.headerBadge}>
+                      <Text style={s.headerBadgeTxt}>{itemCount > 9 ? "9+" : itemCount}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={s.iconBtn}
+                  onPress={() => router.push("/(tabs)/profile" as any)}
+                  accessibilityLabel="Mon profil"
+                >
+                  <Ionicons name="person-circle-outline" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Search bar */}
@@ -608,6 +623,7 @@ export default function HomeScreen() {
         initialIndex={Math.min(initialShort, Math.max(shorts.length - 1, 0))}
         onClose={() => setShortsVisible(false)}
       />
+      <SideMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
   );
 }
@@ -635,64 +651,46 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 14,
   },
-  locRow: {
+  headerLogo: {
     flex: 1,
+    textAlign: "center",
+    color: "#fff",
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
+    fontStyle: "italic",
+  },
+  headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingRight: 10,
+    gap: 4,
   },
-  locTxt: {
-    flex: 1,
-    color: "#fff",
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-  },
-  locTxtBold: {
-    color: "#fff",
-    fontFamily: "Inter_700Bold",
-  },
-  avatar: {
+  iconBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#FFB6CC",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
-  cartBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  cartBadge: {
+  headerBadge: {
     position: "absolute",
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    paddingHorizontal: 4,
-    borderRadius: 9,
+    top: 2,
+    right: 2,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    borderRadius: 8,
     backgroundColor: "#FFD400",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "#FFFFFF",
+    borderColor: PINK,
   },
-  cartBadgeTxt: {
+  headerBadgeTxt: {
     color: "#0A1B3D",
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: "Inter_700Bold",
-    lineHeight: 12,
+    lineHeight: 11,
   },
   searchBox: {
     height: 48,
