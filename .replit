@@ -194,7 +194,7 @@ packages = ["eas-cli", "unzipNLS", "gir-rs"]
   [userenv]
 
   [userenv.shared]
-VAPID_PUBLIC_KEY = "BLvX52wA4BwrhPabN3D4gcmgP-FR8mZOOZs9S-fPW9jQ8PUp7xqG8mCfelF9DPBBAdSYBHANTIv1W5LPlxMra_g"
+VAPID_PUBLIC_KEY = "BGQrF1lFMTnMegWotpDT8shZuP-R-1BmR__JzuODouxvvAmMZj8ziM18Xqszzypuj-pK5yMS-Yu3pLu9X9Gb2Fg"
 VAPID_SUBJECT = "mailto:admin@jatek.ma"
 TWILIO_FROM_NUMBER = "+15072600620"
 

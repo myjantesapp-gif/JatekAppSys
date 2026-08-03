@@ -238,7 +238,7 @@ router.post("/backend/orders/:id/refund", requireAuth, async (req: AuthedRequest
     const orderId = parseInt(String(req.params.id), 10);
     if (isNaN(orderId)) { res.status(400).json({ error: "Invalid id" }); return; }
     const { amount, reason, notes } = req.body;
-    if (!amount || !reason) { res.status(400).json({ error: "amount et reason requis" }); return; }
+    if (!amount || Number(amount) <= 0 || !reason) { res.status(400).json({ error: "amount (positif) et reason requis" }); return; }
 
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId)).limit(1);
     if (!order) { res.status(404).json({ error: "Commande introuvable" }); return; }
@@ -274,7 +274,7 @@ router.post("/backend/orders/:id/gesture", requireAuth, async (req: AuthedReques
     const orderId = parseInt(String(req.params.id), 10);
     if (isNaN(orderId)) { res.status(400).json({ error: "Invalid id" }); return; }
     const { amount, reason } = req.body;
-    if (!amount || !reason) { res.status(400).json({ error: "amount et reason requis" }); return; }
+    if (!amount || Number(amount) <= 0 || !reason) { res.status(400).json({ error: "amount (positif) et reason requis" }); return; }
 
     const [order] = await db.select({ userId: ordersTable.userId }).from(ordersTable).where(eq(ordersTable.id, orderId)).limit(1);
     if (!order) { res.status(404).json({ error: "Commande introuvable" }); return; }

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, reviewsTable, restaurantsTable } from "@workspace/db";
-import { eq, and, avg } from "drizzle-orm";
+import { eq, and, avg, count } from "drizzle-orm";
 import {
   CreateReviewBody,
   DeleteReviewParams,
@@ -53,12 +53,13 @@ router.post("/reviews", requireAuth, async (req: AuthedRequest, res): Promise<vo
 
   if (ratingResult?.avgRating) {
     const [countResult] = await db
-      .select({ count: eq(reviewsTable.restaurantId, parsed.data.restaurantId) })
+      .select({ count: count() })
       .from(reviewsTable)
       .where(eq(reviewsTable.restaurantId, parsed.data.restaurantId));
 
     await db.update(restaurantsTable).set({
       rating: Number(ratingResult.avgRating),
+      reviewCount: Number(countResult?.count ?? 0),
     }).where(eq(restaurantsTable.id, parsed.data.restaurantId));
   }
 

@@ -53,7 +53,7 @@ router.post("/orders/:id/chat", requireAuth, async (req: AuthedRequest, res): Pr
 
   // Fan out via SSE so both parties see the message instantly
   publish(`order:${orderId}`, "chat_message", msg);
-  publish(`driver_orders:${order.driverId}`, "chat_message", msg);
+  if (order.driverId) publish(`driver_orders:${order.driverId}`, "chat_message", msg);
 
   res.status(201).json(msg);
 });
