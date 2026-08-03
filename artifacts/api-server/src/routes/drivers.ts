@@ -12,6 +12,7 @@ import {
   ListDriversQueryParams,
 } from "@workspace/api-zod";
 import { notifyDrivers } from "../lib/expoPush";
+import { DEFAULT_PLATFORM_SETTINGS, getPlatformSettingNumber } from "../lib/platformSettings";
 
 const router: IRouter = Router();
 
@@ -178,6 +179,7 @@ router.post("/drivers/:id/complete-profile", requireAuth, async (req: any, res):
       licenseNumber: licenseNumber || null,
       photoUrl: photoUrl || null,
       profileCompletedAt: new Date(),
+      isVerified: true,
     })
     .where(eq(driversTable.id, id))
     .returning();
@@ -365,7 +367,7 @@ router.get("/drivers/:id/earnings", requireAuth, async (req: AuthedRequest, res)
     .from(ordersTable)
     .where(and(eq(ordersTable.driverId, driverId), eq(ordersTable.status, "delivered")));
 
-  const driverCommission = 0.15; // 15% commission for driver
+  const driverCommission = await getPlatformSettingNumber("driverCommissionRate", Number(DEFAULT_PLATFORM_SETTINGS.driverCommissionRate));
 
   let today = 0, thisWeek = 0, thisMonth = 0, completedToday = 0;
 

@@ -19,6 +19,7 @@ export const restaurantsTable = pgTable("restaurants", {
   deliveryTime: integer("delivery_time"),
   deliveryFee: real("delivery_fee"),
   minimumOrder: real("minimum_order"),
+  freeDeliveryThreshold: real("free_delivery_threshold").notNull().default(150),
   rating: real("rating"),
   reviewCount: integer("review_count").notNull().default(0),
   isVerified: boolean("is_verified").notNull().default(false),
@@ -33,8 +34,8 @@ export const restaurantsTable = pgTable("restaurants", {
   /** Set when the owner has filled in the mandatory business details. */
   profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
   /** GPS coordinates (WGS-84) for delivery ETA calculation and map display. */
-  latitude: doublePrecision("latitude"),
-  longitude: doublePrecision("longitude"),
+  latitude: doublePrecision("latitude").notNull().default(34.6814),
+  longitude: doublePrecision("longitude").notNull().default(-1.9078),
   /** Whether this restaurant is pinned in the "featured" home carousel. */
   isFeatured: boolean("is_featured").notNull().default(false),
   /** FK to categoriesTable — the subcategory (parentId != null) this shop belongs to. */

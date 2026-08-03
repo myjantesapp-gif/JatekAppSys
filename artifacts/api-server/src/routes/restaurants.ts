@@ -11,20 +11,20 @@ import {
   ListRestaurantsQueryParams,
 } from "@workspace/api-zod";
 import { requireAuth, requireRole, type AuthedRequest } from "../middlewares/auth";
+import { DEFAULT_PLATFORM_SETTINGS, getPlatformSettings } from "../lib/platformSettings";
 
 const router: IRouter = Router();
 
-// Defaults applied when a restaurant row has no explicit value yet.
-// Threshold is global for now (no DB column) — the restaurant payload always
-// returns it so the apps can stop hard-coding it on their side.
-const DEFAULT_DELIVERY_FEE = 15;
-const DEFAULT_FREE_DELIVERY_THRESHOLD = 150;
-
-function withDeliveryDefaults<T extends { deliveryFee?: number | null }>(r: T) {
+async function withDeliveryDefaults<T extends { deliveryFee?: number | null; freeDeliveryThreshold?: number | null }>(r: T) {
+  const settings = await getPlatformSettings();
+  const defaultFee = Number(settings.defaultDeliveryFee);
+  const defaultThreshold = Number(settings.freeDeliveryThreshold);
   return {
     ...r,
-    deliveryFee: typeof r.deliveryFee === "number" ? r.deliveryFee : DEFAULT_DELIVERY_FEE,
-    freeDeliveryThreshold: DEFAULT_FREE_DELIVERY_THRESHOLD,
+    deliveryFee: typeof r.deliveryFee === "number" ? r.deliveryFee : (Number.isFinite(defaultFee) ? defaultFee : Number(DEFAULT_PLATFORM_SETTINGS.defaultDeliveryFee)),
+    freeDeliveryThreshold: typeof r.freeDeliveryThreshold === "number"
+      ? r.freeDeliveryThreshold
+      : (Number.isFinite(defaultThreshold) ? defaultThreshold : Number(DEFAULT_PLATFORM_SETTINGS.freeDeliveryThreshold)),
   };
 }
 
@@ -52,7 +52,7 @@ router.get("/restaurants/featured", async (_req, res): Promise<void> => {
     .from(restaurantsTable)
     .where(and(eq(restaurantsTable.isVerified, true), eq(restaurantsTable.isOpen, true)))
     .limit(6);
-  res.json(restaurants.map(withDeliveryDefaults));
+  res.json(await Promise.all(restaurants.map(withDeliveryDefaults)));
 });
 
 router.get("/restaurants", async (req, res): Promise<void> => {
@@ -91,7 +91,7 @@ router.get("/restaurants", async (req, res): Promise<void> => {
     ? await db.select().from(restaurantsTable).where(and(...conditions))
     : await db.select().from(restaurantsTable);
 
-  res.json(restaurants.map(withDeliveryDefaults));
+  res.json(await Promise.all(restaurants.map(withDeliveryDefaults)));
 });
 
 router.post("/restaurants", requireRole("admin"), async (req: AuthedRequest, res): Promise<void> => {
@@ -108,13 +108,21 @@ router.post("/restaurants", requireRole("admin"), async (req: AuthedRequest, res
   // Admins can specify a target ownerId in the raw body; all others always own the restaurant themselves
   const adminOwnerId = req.userRole === "admin" && typeof req.body?.ownerId === "number" ? req.body.ownerId : null;
   const ownerId = adminOwnerId ?? req.userId;
+  const settings = await getPlatformSettings();
+  const defaultLatitude = Number(settings.defaultLatitude);
+  const defaultLongitude = Number(settings.defaultLongitude);
+  const defaultThreshold = Number(settings.freeDeliveryThreshold);
 
   const [restaurant] = await db.insert(restaurantsTable).values({
     ...parsed.data,
     ownerId,
-    isVerified: false,
+    isVerified: true,
+    profileCompletedAt: new Date(),
     isOpen: true,
     reviewCount: 0,
+    freeDeliveryThreshold: Number.isFinite(defaultThreshold) ? defaultThreshold : Number(DEFAULT_PLATFORM_SETTINGS.freeDeliveryThreshold),
+    latitude: Number.isFinite(defaultLatitude) ? defaultLatitude : Number(DEFAULT_PLATFORM_SETTINGS.defaultLatitude),
+    longitude: Number.isFinite(defaultLongitude) ? defaultLongitude : Number(DEFAULT_PLATFORM_SETTINGS.defaultLongitude),
   }).returning();
 
   res.status(201).json(restaurant);
@@ -133,7 +141,7 @@ router.get("/restaurants/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(withDeliveryDefaults(restaurant));
+  res.json(await withDeliveryDefaults(restaurant));
 });
 
 router.patch("/restaurants/:id", requireRole("admin", "restaurant_owner"), async (req: AuthedRequest, res): Promise<void> => {

@@ -38,9 +38,11 @@ const EMPTY = {
   category: "",        // saved to DB — equals the subcategory's apiCategory (e.g. "Pizza")
   businessType: "",    // derived from parentSlug (e.g. "restaurant")
   subcategoryId: "",   // legacy DB ref — kept for compatibility
-  imageUrl: "", logoUrl: "",
+  imageUrl: "", logoUrl: "", coverImageUrl: "",
   deliveryTime: "", deliveryFee: "", minimumOrder: "",
-  isOpen: true, ownerId: "", isFeatured: false,
+  latitude: "34.6814", longitude: "-1.9078",
+  legalName: "", ice: "",
+  isOpen: true, ownerId: "", isFeatured: false, isVerified: false, profileCompleted: false,
 };
 
 export default function Shops() {
@@ -103,9 +105,16 @@ export default function Shops() {
     subcategoryId: f.subcategoryId ? Number(f.subcategoryId) : undefined,
     imageUrl: f.imageUrl || undefined,
     logoUrl: f.logoUrl || undefined,
+    coverImageUrl: f.coverImageUrl || undefined,
     deliveryTime: f.deliveryTime ? Number(f.deliveryTime) : undefined,
     deliveryFee: f.deliveryFee ? Number(f.deliveryFee) : undefined,
     minimumOrder: f.minimumOrder ? Number(f.minimumOrder) : undefined,
+    latitude: f.latitude ? Number(f.latitude) : undefined,
+    longitude: f.longitude ? Number(f.longitude) : undefined,
+    legalName: f.legalName || undefined,
+    ice: f.ice || undefined,
+    isVerified: f.isVerified,
+    profileCompleted: f.profileCompleted,
     ownerId: f.ownerId ? Number(f.ownerId) : undefined,
     isFeatured: f.isFeatured ?? false,
   });
@@ -156,12 +165,19 @@ export default function Shops() {
       subcategoryId: s.subcategoryId ? String(s.subcategoryId) : "",
       imageUrl: s.imageUrl ?? "",
       logoUrl: s.logoUrl ?? "",
+       coverImageUrl: s.coverImageUrl ?? "",
+       latitude: String(s.latitude ?? "34.6814"),
+       longitude: String(s.longitude ?? "-1.9078"),
+       legalName: s.legalName ?? "",
+       ice: s.ice ?? "",
       deliveryTime: String(s.deliveryTime ?? ""),
       deliveryFee: String(s.deliveryFee ?? ""),
       minimumOrder: String(s.minimumOrder ?? ""),
       isOpen: !!s.isOpen,
       ownerId: s.ownerId ? String(s.ownerId) : "",
       isFeatured: !!(s as any).isFeatured,
+       isVerified: !!s.isVerified,
+       profileCompleted: !!s.profileCompletedAt,
     });
   };
 
@@ -611,6 +627,38 @@ function ShopForm({
           <Input type="number" value={form.minimumOrder} onChange={(e) => set("minimumOrder", e.target.value)} />
         </Field>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="Latitude">
+          <Input type="number" step="any" value={form.latitude} onChange={(e) => set("latitude", e.target.value)} />
+        </Field>
+        <Field label="Longitude">
+          <Input type="number" step="any" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} />
+        </Field>
+      </div>
+
+      {isAdmin && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Raison sociale">
+              <Input value={form.legalName} onChange={(e) => set("legalName", e.target.value)} />
+            </Field>
+            <Field label="ICE">
+              <Input value={form.ice} onChange={(e) => set("ice", e.target.value)} />
+            </Field>
+          </div>
+          <div className="flex flex-wrap gap-5 pt-1">
+            <div className="flex items-center gap-2">
+              <Switch checked={form.isVerified} onCheckedChange={(v) => set("isVerified", v)} />
+              <Label>Restaurant vérifié</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={form.profileCompleted} onCheckedChange={(v) => set("profileCompleted", v)} />
+              <Label>Profil complet</Label>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Owner */}
       {isAdmin && (

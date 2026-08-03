@@ -18,11 +18,12 @@ export const driversTable = pgTable("drivers", {
   photoUrl: text("photo_url"),
   /** Set the moment the driver completes the mandatory onboarding fields. */
   profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
+  isVerified: boolean("is_verified").notNull().default(false),
   isAvailable: boolean("is_available").notNull().default(true),
   totalDeliveries: integer("total_deliveries").notNull().default(0),
   rating: real("rating"),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
+  latitude: real("latitude").notNull().default(34.6814),
+  longitude: real("longitude").notNull().default(-1.9078),
   locationUpdatedAt: timestamp("location_updated_at", { withTimezone: true }),
   /** Expo push token — used to send remote notifications when the app is closed. */
   pushToken: text("push_token"),

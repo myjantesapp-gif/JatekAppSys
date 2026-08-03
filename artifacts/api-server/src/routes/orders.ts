@@ -31,6 +31,7 @@ import * as tracking from "../lib/trackingService";
 import { pushNotification } from "./notifications";
 import { notifyDrivers } from "../lib/expoPush";
 import { sendWebPush } from "../lib/vapid";
+import { DEFAULT_PLATFORM_SETTINGS, getPlatformSettingNumber } from "../lib/platformSettings";
 
 const router: IRouter = Router();
 
@@ -628,7 +629,8 @@ router.patch("/orders/:id/status", requireAuth, async (req: AuthedRequest, res, 
           .from(driversTable)
           .where(eq(driversTable.isAvailable, true));
         const tokens = onlineDrivers.map((d) => d.pushToken);
-        const earning = Math.round(order.total * 0.15 * 10) / 10;
+        const commissionRate = await getPlatformSettingNumber("driverCommissionRate", Number(DEFAULT_PLATFORM_SETTINGS.driverCommissionRate));
+        const earning = Math.round(order.total * commissionRate * 10) / 10;
         await notifyDrivers(
           tokens,
           "🏍️ Nouvelle course disponible !",

@@ -129,7 +129,7 @@ function RestaurantCardGrid({ restaurant, onPress, color }: { restaurant: Restau
   const img = restaurant.imageUrl || FALLBACK_IMG;
   const rating = restaurant.rating ?? 4.5;
   const time = restaurant.deliveryTime ?? 25;
-  const fee = restaurant.deliveryFee ?? 10;
+  const fee = restaurant.deliveryFee ?? 0;
 
   return (
     <Pressable

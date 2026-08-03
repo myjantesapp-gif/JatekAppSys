@@ -20,6 +20,7 @@ import { requireAuth, type AuthedRequest } from "../middlewares/auth";
 import { sendOtpMessage } from "../lib/otpMessaging";
 import * as tracking from "../lib/trackingService";
 import { publish } from "../lib/sse";
+import { DEFAULT_PLATFORM_SETTINGS, getPlatformSettingNumber } from "../lib/platformSettings";
 
 const router: IRouter = Router();
 
@@ -264,8 +265,10 @@ router.get("/backend/dashboard", requireAuth, async (req: AuthedRequest, res): P
   const [deliveryRow] = await db.select({ s: sum(ordersTable.deliveryFee) }).from(ordersTable).where(baseOrderWhere(and(eq(ordersTable.status, "delivered"), gte(ordersTable.createdAt, start))));
   const totalEarned = Number(earnedRow?.s || 0);
   const deliveryEarning = Number(deliveryRow?.s || 0);
-  const totalOrderTax = +(totalEarned * 0.20).toFixed(2);
-  const totalCommission = +(totalEarned * 0.15).toFixed(2);
+  const taxRate = await getPlatformSettingNumber("taxRate", Number(DEFAULT_PLATFORM_SETTINGS.taxRate));
+  const totalOrderTax = +(totalEarned * taxRate).toFixed(2);
+  const commissionRate = await getPlatformSettingNumber("driverCommissionRate", Number(DEFAULT_PLATFORM_SETTINGS.driverCommissionRate));
+  const totalCommission = +(totalEarned * commissionRate).toFixed(2);
 
   // Orders chart by day for the requested range
   const days = range === "week" ? 7 : range === "year" ? 12 : 30;
@@ -587,20 +590,30 @@ router.post("/backend/shops", requireAuth, async (req: AuthedRequest, res, next)
   if (!ctx) return;
   if (!["super_admin", "admin"].includes(ctx.role)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
-    const { name, description, address, phone, category, imageUrl, logoUrl, coverImageUrl, deliveryTime, deliveryFee, minimumOrder, ownerId, isOpen, businessType, subcategoryId, isFeatured } = req.body || {};
+    const { name, description, address, phone, category, imageUrl, logoUrl, coverImageUrl, deliveryTime, deliveryFee, minimumOrder, freeDeliveryThreshold, ownerId, isOpen, businessType, subcategoryId, isFeatured, latitude, longitude, legalName, ice, printerEmail } = req.body || {};
     if (!name || !address) { res.status(400).json({ error: "name et address requis" }); return; }
+    const defaultLatitude = await getPlatformSettingNumber("defaultLatitude", Number(DEFAULT_PLATFORM_SETTINGS.defaultLatitude));
+    const defaultLongitude = await getPlatformSettingNumber("defaultLongitude", Number(DEFAULT_PLATFORM_SETTINGS.defaultLongitude));
     const [shop] = await db.insert(restaurantsTable).values({
       name, description: description ?? null, address,
       phone: phone ?? null, category: category ?? "restaurant",
       imageUrl: imageUrl ?? null, logoUrl: logoUrl ?? null, coverImageUrl: coverImageUrl ?? null,
       deliveryTime: deliveryTime ? Number(deliveryTime) : null,
-      deliveryFee: deliveryFee ? Number(deliveryFee) : null,
-      minimumOrder: minimumOrder ? Number(minimumOrder) : null,
+      deliveryFee: deliveryFee !== undefined && deliveryFee !== null && deliveryFee !== "" ? Number(deliveryFee) : null,
+      minimumOrder: minimumOrder !== undefined && minimumOrder !== null && minimumOrder !== "" ? Number(minimumOrder) : null,
+      freeDeliveryThreshold: freeDeliveryThreshold !== undefined ? Number(freeDeliveryThreshold) : await getPlatformSettingNumber("freeDeliveryThreshold", Number(DEFAULT_PLATFORM_SETTINGS.freeDeliveryThreshold)),
       ownerId: ownerId ? Number(ownerId) : (ctx.id),
       isOpen: isOpen ?? true,
       businessType: businessType ?? "restaurant",
       subcategoryId: subcategoryId ? Number(subcategoryId) : null,
       isFeatured: isFeatured ?? false,
+      isVerified: true,
+      profileCompletedAt: new Date(),
+      legalName: typeof legalName === "string" && legalName.trim() ? legalName.trim() : name.trim(),
+      ice: typeof ice === "string" && ice.trim() ? ice.trim() : null,
+      printerEmail: printerEmail ?? null,
+      latitude: Number.isFinite(Number(latitude)) ? Number(latitude) : defaultLatitude,
+      longitude: Number.isFinite(Number(longitude)) ? Number(longitude) : defaultLongitude,
     }).returning();
     res.status(201).json(shop);
   } catch (err) { next(err); }
@@ -617,11 +630,16 @@ router.patch("/backend/shops/:id", requireAuth, async (req: AuthedRequest, res, 
     if (scoped !== null && !scoped.includes(id)) {
       res.status(403).json({ error: "Forbidden: not your restaurant" }); return;
     }
-    const adminAllowed = ["name", "description", "address", "phone", "category", "imageUrl", "logoUrl", "coverImageUrl", "deliveryTime", "deliveryFee", "minimumOrder", "isOpen", "ownerId", "isVerified", "businessType", "subcategoryId", "isFeatured"];
+    const adminAllowed = ["name", "description", "address", "phone", "category", "imageUrl", "logoUrl", "coverImageUrl", "deliveryTime", "deliveryFee", "minimumOrder", "freeDeliveryThreshold", "isOpen", "ownerId", "isVerified", "businessType", "subcategoryId", "isFeatured", "latitude", "longitude", "legalName", "ice", "printerEmail", "profileCompletedAt"];
     const ownerAllowed = ["name", "description", "address", "phone", "category", "imageUrl", "logoUrl", "coverImageUrl", "deliveryTime", "deliveryFee", "minimumOrder", "isOpen", "businessType", "subcategoryId"];
     const allowed = (ctx.role === "restaurant_owner" || ctx.role === "owner") ? ownerAllowed : adminAllowed;
     const updates: Record<string, unknown> = {};
     for (const k of allowed) if ((req.body || {})[k] !== undefined) updates[k] = req.body[k];
+    if (ctx.role === "admin" || ctx.role === "super_admin") {
+      if (typeof req.body?.profileCompleted === "boolean") {
+        updates.profileCompletedAt = req.body.profileCompleted ? new Date() : null;
+      }
+    }
     if (Object.keys(updates).length === 0) { res.status(400).json({ error: "No valid fields to update" }); return; }
     const [shop] = await db.update(restaurantsTable).set(updates as any).where(eq(restaurantsTable.id, id)).returning();
     if (!shop) { res.status(404).json({ error: "Not found" }); return; }
@@ -637,7 +655,10 @@ router.delete("/backend/shops/:id", requireAuth, async (req: AuthedRequest, res,
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-    await db.delete(restaurantsTable).where(eq(restaurantsTable.id, id));
+    const deleted = await db.delete(restaurantsTable)
+      .where(eq(restaurantsTable.id, id))
+      .returning({ id: restaurantsTable.id });
+    if (deleted.length === 0) { res.status(404).json({ error: "Not found" }); return; }
     res.status(204).end();
   } catch (err: any) {
     if (err?.code === "23503") { res.status(409).json({ error: "Cette boutique est référencée par des commandes existantes" }); return; }
@@ -783,7 +804,10 @@ router.delete("/backend/staff/:id", requireAuth, async (req: AuthedRequest, res)
   const ctx = await requireBackendUser(req, res);
   if (!ctx) return;
   if (!["super_admin", "admin"].includes(ctx.role)) { res.status(403).json({ error: "Forbidden" }); return; }
-  await db.delete(usersTable).where(eq(usersTable.id, Number(req.params.id)));
+  const deleted = await db.delete(usersTable)
+    .where(eq(usersTable.id, Number(req.params.id)))
+    .returning({ id: usersTable.id });
+  if (deleted.length === 0) { res.status(404).json({ error: "Not found" }); return; }
   res.status(204).end();
 });
 
@@ -815,7 +839,7 @@ router.post("/backend/drivers", requireAuth, async (req: AuthedRequest, res): Pr
   if (!ctx) return;
   if (!["super_admin", "admin"].includes(ctx.role)) { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const { name, phone, email, vehicleType, vehiclePlate, nationalId, licenseNumber } = req.body ?? {};
+  const { name, phone, email, vehicleType, vehiclePlate, nationalId, licenseNumber, latitude, longitude } = req.body ?? {};
   if (!name || typeof name !== "string" || !name.trim()) { res.status(400).json({ error: "name is required" }); return; }
   if (!phone || typeof phone !== "string" || !phone.trim()) { res.status(400).json({ error: "phone is required" }); return; }
 
@@ -843,24 +867,33 @@ router.post("/backend/drivers", requireAuth, async (req: AuthedRequest, res): Pr
   const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
   try {
-    const [newUser] = await db.insert(usersTable).values({
-      name: name.trim(),
-      phone: phoneTrimmed,
-      email: emailVal,
-      password: hashedPassword,
-      role: "driver",
-      isActive: true,
-    }).returning();
+    const defaultLatitude = await getPlatformSettingNumber("defaultLatitude", Number(DEFAULT_PLATFORM_SETTINGS.defaultLatitude));
+    const defaultLongitude = await getPlatformSettingNumber("defaultLongitude", Number(DEFAULT_PLATFORM_SETTINGS.defaultLongitude));
+    const { newUser, driver } = await db.transaction(async (tx) => {
+      const [newUser] = await tx.insert(usersTable).values({
+        name: name.trim(),
+        phone: phoneTrimmed,
+        email: emailVal,
+        password: hashedPassword,
+        role: "driver",
+        isActive: true,
+      }).returning();
 
-    const [driver] = await db.insert(driversTable).values({
-      userId: newUser.id,
-      name: name.trim(),
-      phone: phoneTrimmed,
-      vehicleType: vehicleType ?? null,
-      vehiclePlate: vehiclePlate ?? null,
-      nationalId: nationalId ?? null,
-      licenseNumber: licenseNumber ?? null,
-    }).returning();
+      const [driver] = await tx.insert(driversTable).values({
+        userId: newUser.id,
+        name: name.trim(),
+        phone: phoneTrimmed,
+        vehicleType: vehicleType?.trim() || "moto",
+        vehiclePlate: vehiclePlate?.trim() || null,
+        nationalId: nationalId?.trim() || null,
+        licenseNumber: licenseNumber?.trim() || null,
+        profileCompletedAt: new Date(),
+        isVerified: true,
+        latitude: Number.isFinite(Number(latitude)) ? Number(latitude) : defaultLatitude,
+        longitude: Number.isFinite(Number(longitude)) ? Number(longitude) : defaultLongitude,
+      }).returning();
+      return { newUser, driver };
+    });
 
     // Return driver record + temporary password so admin can share it with the driver.
     // tempPassword is intentionally separated from the driver object so it is not
@@ -903,7 +936,7 @@ router.patch("/backend/drivers/:id", requireAuth, async (req: AuthedRequest, res
   const [existing] = await db.select().from(driversTable).where(eq(driversTable.id, id)).limit(1);
   if (!existing) { res.status(404).json({ error: "Driver not found" }); return; }
 
-  const { name, phone, vehicleType, vehiclePlate, nationalId, licenseNumber, isAvailable } = req.body ?? {};
+  const { name, phone, vehicleType, vehiclePlate, nationalId, licenseNumber, isAvailable, isVerified, profileCompleted, latitude, longitude } = req.body ?? {};
   const driverUpdates: Partial<typeof driversTable.$inferInsert> = {};
   if (name !== undefined) driverUpdates.name = String(name).trim();
   if (phone !== undefined) driverUpdates.phone = String(phone).trim();
@@ -912,16 +945,27 @@ router.patch("/backend/drivers/:id", requireAuth, async (req: AuthedRequest, res
   if (nationalId !== undefined) driverUpdates.nationalId = nationalId;
   if (licenseNumber !== undefined) driverUpdates.licenseNumber = licenseNumber;
   if (isAvailable !== undefined) driverUpdates.isAvailable = Boolean(isAvailable);
+  if (latitude !== undefined && Number.isFinite(Number(latitude))) driverUpdates.latitude = Number(latitude);
+  if (longitude !== undefined && Number.isFinite(Number(longitude))) driverUpdates.longitude = Number(longitude);
+  if (ctx.role === "admin" || ctx.role === "super_admin") {
+    if (isVerified !== undefined) driverUpdates.isVerified = Boolean(isVerified);
+    if (profileCompleted !== undefined) {
+      driverUpdates.profileCompletedAt = profileCompleted ? (existing.profileCompletedAt ?? new Date()) : null;
+    }
+  }
 
   // Sync identity fields to usersTable to prevent divergence
   const userUpdates: Partial<typeof usersTable.$inferInsert> = {};
   if (driverUpdates.name !== undefined) userUpdates.name = driverUpdates.name;
   if (driverUpdates.phone !== undefined) userUpdates.phone = driverUpdates.phone;
 
-  const [driver] = await db.update(driversTable).set(driverUpdates).where(eq(driversTable.id, id)).returning();
-  if (Object.keys(userUpdates).length > 0) {
-    await db.update(usersTable).set(userUpdates).where(eq(usersTable.id, existing.userId));
-  }
+  const [driver] = await db.transaction(async (tx) => {
+    const [updated] = await tx.update(driversTable).set(driverUpdates).where(eq(driversTable.id, id)).returning();
+    if (Object.keys(userUpdates).length > 0) {
+      await tx.update(usersTable).set(userUpdates).where(eq(usersTable.id, existing.userId));
+    }
+    return [updated];
+  });
   res.json(driver);
 });
 
@@ -1276,27 +1320,14 @@ router.get("/backend/wallets", requireAuth, async (req: AuthedRequest, res): Pro
 });
 
 // ---------- Platform Settings ----------
-const DEFAULT_SETTINGS = {
-  appName: "Jatek",
-  supportEmail: "support@jatek.ma",
-  supportPhone: "+212600000000",
-  defaultDeliveryFee: "15",
-  maxDeliveryRadiusKm: "10",
-  minOrderAmount: "30",
-  orderNotificationsEnabled: true,
-  maintenanceMode: false,
-  city: "Oujda",
-  currency: "MAD",
-};
-
 router.get("/backend/settings", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
   const ctx = await requireBackendUser(req, res);
   if (!ctx) return;
   try {
     const [row] = await db.select().from(platformSettingsTable).limit(1);
-    res.json(row ? { ...DEFAULT_SETTINGS, ...(row.data as object) } : DEFAULT_SETTINGS);
+    res.json(row ? { ...DEFAULT_PLATFORM_SETTINGS, ...(row.data as object) } : DEFAULT_PLATFORM_SETTINGS);
   } catch {
-    res.json(DEFAULT_SETTINGS);
+    res.json(DEFAULT_PLATFORM_SETTINGS);
   }
 });
 
@@ -1311,13 +1342,13 @@ router.put("/backend/settings", requireAuth, async (req: AuthedRequest, res): Pr
     const [existing] = await db.select().from(platformSettingsTable).limit(1);
     if (existing) {
       const [updated] = await db.update(platformSettingsTable)
-        .set({ data: { ...DEFAULT_SETTINGS, ...(existing.data as object), ...data }, updatedAt: new Date() })
+        .set({ data: { ...DEFAULT_PLATFORM_SETTINGS, ...(existing.data as object), ...data }, updatedAt: new Date() })
         .where(eq(platformSettingsTable.id, existing.id))
         .returning();
       res.json(updated.data);
     } else {
       const [created] = await db.insert(platformSettingsTable)
-        .values({ data: { ...DEFAULT_SETTINGS, ...data } })
+        .values({ data: { ...DEFAULT_PLATFORM_SETTINGS, ...data } })
         .returning();
       res.json(created.data);
     }

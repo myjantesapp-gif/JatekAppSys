@@ -30,9 +30,6 @@ export interface RestaurantPricing {
   freeDeliveryThreshold?: number | null;
 }
 
-const DEFAULT_DELIVERY_FEE = 15;
-const DEFAULT_FREE_DELIVERY_THRESHOLD = 150;
-
 export type CouponApplyResult = { ok: true; label: string } | { ok: false; reason: string };
 
 interface CartContextType {
@@ -80,8 +77,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [restaurantId, setRestaurantId] = useState<number | null>(null);
   const [restaurantName, setRestaurantName] = useState("");
-  const [deliveryFee, setDeliveryFee] = useState<number>(DEFAULT_DELIVERY_FEE);
-  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number>(DEFAULT_FREE_DELIVERY_THRESHOLD);
+  // Pricing is supplied by the selected restaurant API response. Zero is only
+  // the empty-cart state; addItem replaces it with the persisted DB values.
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number>(0);
   const [selectedAddress, setSelectedAddressState] = useState<string>("");
   const [selectedAddressInZone, setSelectedAddressInZone] = useState<boolean>(true);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponDef | null>(null);
@@ -225,8 +224,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]); setRestaurantId(null); setRestaurantName("");
-    setDeliveryFee(DEFAULT_DELIVERY_FEE);
-    setFreeDeliveryThreshold(DEFAULT_FREE_DELIVERY_THRESHOLD);
+    setDeliveryFee(0);
+    setFreeDeliveryThreshold(0);
     setAppliedCoupon(null);
     setNotesState("");
   }, []);

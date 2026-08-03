@@ -25,12 +25,16 @@ type Driver = {
   nationalId?: string | null;
   licenseNumber?: string | null;
   isAvailable: boolean;
+  isVerified?: boolean;
+  profileCompletedAt?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   totalDeliveries: number;
   rating?: number | null;
 };
 
 const emptyNew = { name: "", phone: "", email: "", vehicleType: "", vehiclePlate: "", nationalId: "", licenseNumber: "" };
-const emptyEdit = { name: "", phone: "", vehicleType: "", vehiclePlate: "", nationalId: "", licenseNumber: "", isAvailable: true };
+const emptyEdit = { name: "", phone: "", vehicleType: "", vehiclePlate: "", nationalId: "", licenseNumber: "", isAvailable: true, isVerified: false, profileCompleted: false, latitude: "34.6814", longitude: "-1.9078" };
 
 export default function Deliverymen() {
   const { data: drivers, isLoading } = useListBackendDeliverymen();
@@ -87,6 +91,10 @@ export default function Deliverymen() {
       nationalId: d.nationalId ?? "",
       licenseNumber: d.licenseNumber ?? "",
       isAvailable: d.isAvailable,
+      isVerified: !!d.isVerified,
+      profileCompleted: !!d.profileCompletedAt,
+      latitude: String(d.latitude ?? "34.6814"),
+      longitude: String(d.longitude ?? "-1.9078"),
     });
   };
 
@@ -149,9 +157,11 @@ export default function Deliverymen() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={d.isAvailable ? "default" : "secondary"}>
-                      {d.isAvailable ? "Disponible" : "Hors ligne"}
-                    </Badge>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant={d.isAvailable ? "default" : "secondary"}>{d.isAvailable ? "Disponible" : "Hors ligne"}</Badge>
+                      {d.isVerified && <Badge variant="outline">Vérifié</Badge>}
+                      {d.profileCompletedAt && <Badge variant="outline">Complet</Badge>}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right px-6">
                     <div className="flex items-center justify-end gap-1">
@@ -181,6 +191,14 @@ export default function Deliverymen() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1"><Label className="text-xs">Nom</Label><Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Nom complet" /></div>
               <div className="space-y-1"><Label className="text-xs">Téléphone</Label><Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} placeholder="+212..." /></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1"><Label className="text-xs">Latitude</Label><Input type="number" step="any" value={editForm.latitude} onChange={(e) => setEditForm({ ...editForm, latitude: e.target.value })} /></div>
+              <div className="space-y-1"><Label className="text-xs">Longitude</Label><Input type="number" step="any" value={editForm.longitude} onChange={(e) => setEditForm({ ...editForm, longitude: e.target.value })} /></div>
+            </div>
+            <div className="flex flex-wrap gap-5 pt-1">
+              <div className="flex items-center gap-2"><Switch checked={editForm.isVerified} onCheckedChange={(v) => setEditForm({ ...editForm, isVerified: v })} /><Label>Vérifié</Label></div>
+              <div className="flex items-center gap-2"><Switch checked={editForm.profileCompleted} onCheckedChange={(v) => setEditForm({ ...editForm, profileCompleted: v })} /><Label>Profil complet</Label></div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1"><Label className="text-xs">Type de véhicule</Label><Input value={editForm.vehicleType} onChange={(e) => setEditForm({ ...editForm, vehicleType: e.target.value })} placeholder="moto, vélo, voiture..." /></div>

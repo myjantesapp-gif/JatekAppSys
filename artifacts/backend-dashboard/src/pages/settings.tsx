@@ -18,8 +18,13 @@ interface PlatformSettings {
   supportEmail: string;
   supportPhone: string;
   defaultDeliveryFee: string;
+  freeDeliveryThreshold: string;
   maxDeliveryRadiusKm: string;
   minOrderAmount: string;
+  taxRate: string;
+  driverCommissionRate: string;
+  defaultLatitude: string;
+  defaultLongitude: string;
   orderNotificationsEnabled: boolean;
   maintenanceMode: boolean;
   city: string;
@@ -32,8 +37,13 @@ function defaultSettings(): PlatformSettings {
     supportEmail: "support@jatek.ma",
     supportPhone: "+212600000000",
     defaultDeliveryFee: "15",
+    freeDeliveryThreshold: "150",
     maxDeliveryRadiusKm: "10",
     minOrderAmount: "30",
+    taxRate: "0.20",
+    driverCommissionRate: "0.15",
+    defaultLatitude: "34.6814",
+    defaultLongitude: "-1.9078",
     orderNotificationsEnabled: true,
     maintenanceMode: false,
     city: "Oujda",
@@ -160,8 +170,14 @@ export default function SettingsPage() {
 
         <Section title="Livraison" icon={Truck} description="Paramètres par défaut pour les livraisons">
           <Field label="Frais de livraison par défaut" value={settings.defaultDeliveryFee} onChange={set("defaultDeliveryFee")} type="number" suffix="MAD" disabled={!isAdmin} />
+          <Field label="Seuil de livraison gratuite" value={settings.freeDeliveryThreshold} onChange={set("freeDeliveryThreshold")} type="number" suffix="MAD" disabled={!isAdmin} />
           <Field label="Rayon de livraison max" value={settings.maxDeliveryRadiusKm} onChange={set("maxDeliveryRadiusKm")} type="number" suffix="km" disabled={!isAdmin} />
           <Field label="Montant minimum de commande" value={settings.minOrderAmount} onChange={set("minOrderAmount")} type="number" suffix="MAD" disabled={!isAdmin} />
+          <Field label="Taux de taxe" value={settings.taxRate} onChange={set("taxRate")} type="number" suffix="0–1" disabled={!isAdmin} />
+          <Field label="Commission livreur" value={settings.driverCommissionRate} onChange={set("driverCommissionRate")} type="number" suffix="0–1" disabled={!isAdmin} />
+          <Separator />
+          <Field label="Latitude par défaut" value={settings.defaultLatitude} onChange={set("defaultLatitude")} type="number" disabled={!isAdmin} />
+          <Field label="Longitude par défaut" value={settings.defaultLongitude} onChange={set("defaultLongitude")} type="number" disabled={!isAdmin} />
         </Section>
 
         <Section title="Notifications" icon={Bell} description="Activation des notifications système">
