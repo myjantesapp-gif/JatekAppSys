@@ -18,7 +18,12 @@ const TEMPLATE_PATH = path.resolve(__dirname, "templates", "landing-page.html");
 const basePath = (process.env.BASE_PATH || "/").replace(/\/+$/, "");
 
 // EAS Update project ID — used as fallback manifest source when static-build/ is absent.
-const EAS_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID || "24f32081-ec5b-4040-9694-24e08de7e7c7";
+// Keep this aligned with eas.json/app.config.js. Production does not inject the
+// mobile build variables, so a stale fallback here makes the published QR code
+// load a different Expo project than the current Android preview APK.
+const EAS_PROJECT_ID =
+  process.env.EXPO_PUBLIC_PROJECT_ID || "d29ba8e6-bdfb-4019-9888-d7045ed65d71";
+const EAS_CHANNEL = process.env.EXPO_CHANNEL_NAME || "preview";
 const EAS_UPDATE_URL = `https://u.expo.dev/${EAS_PROJECT_ID}`;
 
 const MIME_TYPES = {
@@ -53,7 +58,7 @@ async function proxyEasManifest(platform, incomingHeaders, res) {
   try {
     const headers = {
       "expo-platform": platform,
-      "expo-channel-name": incomingHeaders["expo-channel-name"] || "production",
+      "expo-channel-name": incomingHeaders["expo-channel-name"] || EAS_CHANNEL,
       "accept": "multipart/mixed,application/expo+json,application/json",
     };
     // Forward runtime/SDK version headers if present
