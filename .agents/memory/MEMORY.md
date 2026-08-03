@@ -3,3 +3,4 @@
 - [Jatek mobile API base resolution](jatek-mobile-apibase.md) — Always use getApiBaseSafe() from lib/apiBase.ts, never raw process.env.EXPO_PUBLIC_DOMAIN, which is empty in LAN/Expo-Go dev mode.
 - [Jatek mobile EAS build setup](jatek-mobile-eas.md) — EAS + pnpm workspace quirks: use app.config.js not .ts, set PNPM_VERSION=10.0.0, run via node_modules/.bin/eas.
 - [GitHub push auth](git-push-auth.md) — push via GIT_TOKEN as Basic auth header, never in the remote URL; Git pane pushes fail until user connects GitHub to Replit.
+- [Admin profile verification](admin-profile-verification.md) — admin-created restaurants/drivers are operationally verified and complete; never invent legal identity data for legacy profiles.
