@@ -13,7 +13,8 @@
         "PNPM_VERSION": "10.26.1",
         "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
         "EXPO_OWNER": "rbe2656s-team",
-        "EXPO_SLUG": "jatekclient"
+        "EXPO_SLUG": "jatekclient",
+        "npm_config_frozen_lockfile": "false"
       },
       "android": {
         "buildType": "apk",
@@ -30,7 +31,8 @@
         "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
         "PNPM_VERSION": "10.26.1",
         "EXPO_OWNER": "rbe2656s-team",
-        "EXPO_SLUG": "jatekclient"
+        "EXPO_SLUG": "jatekclient",
+        "npm_config_frozen_lockfile": "false"
       },
       "android": {
         "buildType": "apk"
@@ -45,7 +47,8 @@
         "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
         "PNPM_VERSION": "10.26.1",
         "EXPO_OWNER": "rbe2656s-team",
-        "EXPO_SLUG": "jatekclient"
+        "EXPO_SLUG": "jatekclient",
+        "npm_config_frozen_lockfile": "false"
       },
       "android": {
         "buildType": "app-bundle"
