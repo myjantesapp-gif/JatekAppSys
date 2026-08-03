@@ -184,6 +184,10 @@ export async function fetchMe(): Promise<any> {
   return jsonFetch("/api/auth/me");
 }
 
+export async function fetchMyDriver(): Promise<any> {
+  return jsonFetch("/api/drivers/me");
+}
+
 export async function updateUserProfile(userId: number, data: { name?: string; email?: string; phone?: string | null; address?: string | null; avatarUrl?: string | null }): Promise<any> {
   return jsonFetch(`/api/users/${userId}`, { method: "PATCH", body: JSON.stringify(data) });
 }

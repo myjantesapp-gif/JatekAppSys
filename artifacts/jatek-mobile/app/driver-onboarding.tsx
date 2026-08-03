@@ -21,11 +21,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useListDrivers } from "@workspace/api-client-react";
-
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
-import { completeDriverProfile } from "@/lib/api";
+import { completeDriverProfile, fetchMyDriver } from "@/lib/api";
 
 const VEHICLE_OPTIONS = [
   { value: "scooter", label: "Scooter", icon: "bicycle" as const },
@@ -38,8 +36,8 @@ export default function DriverOnboardingScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { data: drivers, refetch } = useListDrivers();
-  const myDriver = drivers?.find((d) => d.userId === user?.id);
+  const [myDriver, setMyDriver] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const [vehicleType, setVehicleType] = useState<string>("scooter");
   const [vehiclePlate, setVehiclePlate] = useState("");
@@ -47,15 +45,39 @@ export default function DriverOnboardingScreen() {
   const [licenseNumber, setLicenseNumber] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Pre-fill if the driver previously saved partial info.
+  // Load the authenticated driver's record directly from the database-backed
+  // /drivers/me endpoint, rather than fetching every driver and filtering on
+  // the client.
   useEffect(() => {
-    if (!myDriver) return;
-    const d = myDriver as any;
-    setVehicleType(d.vehicleType || "scooter");
-    setVehiclePlate(d.vehiclePlate || "");
-    setNationalId(d.nationalId || "");
-    setLicenseNumber(d.licenseNumber || "");
-  }, [myDriver?.id]);
+    let cancelled = false;
+    if (!user || user.role !== "driver") {
+      setLoadingProfile(false);
+      return;
+    }
+
+    setLoadingProfile(true);
+    fetchMyDriver()
+      .then((driver) => {
+        if (cancelled) return;
+        setMyDriver(driver);
+        setVehicleType(driver.vehicleType || "scooter");
+        setVehiclePlate(driver.vehiclePlate || "");
+        setNationalId(driver.nationalId || "");
+        setLicenseNumber(driver.licenseNumber || "");
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          Alert.alert("Profil introuvable", error?.message ?? "Impossible de charger votre profil livreur.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingProfile(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.role]);
 
   const canSubmit = vehiclePlate.trim().length >= 3 && nationalId.trim().length >= 4 && !!vehicleType;
 
@@ -69,7 +91,8 @@ export default function DriverOnboardingScreen() {
         nationalId: nationalId.trim(),
         licenseNumber: licenseNumber.trim() || undefined,
       });
-      await refetch();
+      const savedDriver = await fetchMyDriver();
+      setMyDriver(savedDriver);
       Alert.alert("Profile saved", "You can now accept deliveries.", [
         { text: "OK", onPress: () => router.back() },
       ]);
@@ -84,6 +107,24 @@ export default function DriverOnboardingScreen() {
     return (
       <View style={[styles.flex, styles.center, { backgroundColor: colors.background }]}>
         <Text style={{ color: colors.foreground }}>Driver access only.</Text>
+      </View>
+    );
+  }
+
+  if (loadingProfile) {
+    return (
+      <View style={[styles.flex, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!myDriver) {
+    return (
+      <View style={[styles.flex, styles.center, { backgroundColor: colors.background, padding: 24 }]}>
+        <Text style={{ color: colors.foreground, textAlign: "center" }}>
+          Aucun profil livreur n'est associé à ce compte.
+        </Text>
       </View>
     );
   }

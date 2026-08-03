@@ -77,6 +77,28 @@ router.get("/drivers/by-order/:orderId", requireAuth, async (req: AuthedRequest,
   });
 });
 
+/**
+ * GET /api/drivers/me
+ * Returns the driver profile linked to the authenticated user.
+ *
+ * This must stay before /drivers/:id: otherwise Express treats "me" as an
+ * integer id and the mobile app receives a misleading 400 response.
+ */
+router.get("/drivers/me", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
+  const [driver] = await db
+    .select()
+    .from(driversTable)
+    .where(eq(driversTable.userId, req.userId!))
+    .limit(1);
+
+  if (!driver) {
+    res.status(404).json({ error: "Driver profile not found" });
+    return;
+  }
+
+  res.json(driver);
+});
+
 router.get("/drivers/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
   const params = GetDriverParams.safeParse(req.params);
   if (!params.success) {
