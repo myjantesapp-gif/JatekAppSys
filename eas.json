@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 14.7.1",
+    "version": ">=21.3.0",
     "appVersionSource": "local",
     "appRoot": "artifacts/jatek-mobile"
   },
@@ -14,7 +14,8 @@
         "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
         "EXPO_OWNER": "straightpath",
         "EXPO_SLUG": "jatekmobile",
-        "npm_config_frozen_lockfile": "false"
+        "npm_config_frozen_lockfile": "false",
+        "NODE_VERSION": "20"
       },
       "android": {
         "buildType": "apk",
@@ -32,7 +33,8 @@
         "PNPM_VERSION": "10.26.1",
         "EXPO_OWNER": "straightpath",
         "EXPO_SLUG": "jatekmobile",
-        "npm_config_frozen_lockfile": "false"
+        "npm_config_frozen_lockfile": "false",
+        "NODE_VERSION": "20"
       },
       "android": {
         "buildType": "apk"
@@ -48,7 +50,8 @@
         "PNPM_VERSION": "10.26.1",
         "EXPO_OWNER": "straightpath",
         "EXPO_SLUG": "jatekmobile",
-        "npm_config_frozen_lockfile": "false"
+        "npm_config_frozen_lockfile": "false",
+        "NODE_VERSION": "20"
       },
       "android": {
         "buildType": "app-bundle"

@@ -1,0 +1,27 @@
+# ─── Dependencies — EAS installs fresh on their servers ───────────────────────
+node_modules/
+
+# ─── Build / generated outputs ────────────────────────────────────────────────
+dist/
+build/
+web-build/
+static-build/
+
+# ─── Local server (not part of the native bundle) ─────────────────────────────
+server/
+
+# ─── Expo local cache ─────────────────────────────────────────────────────────
+.expo/
+.metro-health-check*
+expo-env.d.ts
+
+# ─── TypeScript incremental info ──────────────────────────────────────────────
+*.tsbuildinfo
+
+# ─── OS / editor noise ────────────────────────────────────────────────────────
+.DS_Store
+*.orig.*
+
+# ─── Secrets / local env ──────────────────────────────────────────────────────
+.env
+.env.*

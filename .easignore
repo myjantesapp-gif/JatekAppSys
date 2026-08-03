@@ -1,0 +1,40 @@
+# ─── Dependencies — EAS installs fresh on their servers ───────────────────────
+node_modules/
+
+# ─── Non-mobile artifacts (not needed for the Android/iOS build) ───────────────
+artifacts/api-server/
+artifacts/backend-dashboard/
+artifacts/jatek-landing/
+artifacts/mockup-sandbox/
+
+# ─── Workspace libs not imported by jatek-mobile ──────────────────────────────
+lib/db/
+lib/api-spec/
+lib/api-zod/
+lib/integrations/
+
+# ─── Replit / agent internal dirs ─────────────────────────────────────────────
+.local/
+.agents/
+
+# ─── Build / generated outputs ────────────────────────────────────────────────
+dist/
+build/
+web-build/
+static-build/
+
+# ─── Expo local cache ─────────────────────────────────────────────────────────
+.expo/
+.metro-health-check*
+expo-env.d.ts
+
+# ─── TypeScript incremental info ──────────────────────────────────────────────
+*.tsbuildinfo
+
+# ─── OS / editor noise ────────────────────────────────────────────────────────
+.DS_Store
+*.orig.*
+
+# ─── Secrets / local env ──────────────────────────────────────────────────────
+.env
+.env.*
