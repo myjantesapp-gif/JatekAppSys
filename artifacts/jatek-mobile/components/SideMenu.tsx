@@ -11,6 +11,7 @@ import {
   Dimensions,
   Image,
   Platform,
+  ScrollView,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -100,7 +101,13 @@ export function SideMenu({ visible, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+      statusBarTranslucent={Platform.OS === "android"}
+    >
       <View style={styles.root}>
         <Animated.View style={[styles.overlay, { opacity: overlay }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -111,15 +118,13 @@ export function SideMenu({ visible, onClose }: Props) {
             styles.drawer,
             {
               width: drawerW,
-              paddingTop: insets.top + 18,
-              paddingBottom: insets.bottom + 18,
               backgroundColor: colors.background,
               transform: [{ translateX: slide }],
             },
           ]}
         >
-          {/* Brand header — lighter, no thick border */}
-          <View style={styles.brandHeader}>
+          {/* Brand header */}
+          <View style={[styles.brandHeader, { paddingTop: insets.top + 18 }]}>
             <View style={styles.brandRow}>
               <View style={styles.brandBadge}>
                 <Text style={styles.brandBadgeText}>J.</Text>
@@ -136,8 +141,16 @@ export function SideMenu({ visible, onClose }: Props) {
             </View>
           </View>
 
-          {/* Items */}
-          <View style={styles.itemsWrap}>
+          {/* Items — scrollable so they never clip behind nav bar */}
+          <ScrollView
+            style={styles.itemsScroll}
+            contentContainerStyle={[
+              styles.itemsWrap,
+              { paddingBottom: insets.bottom + 16 },
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
             {ENTRIES.map((entry, i) => (
               <DrawerItem
                 key={entry.id}
@@ -149,19 +162,19 @@ export function SideMenu({ visible, onClose }: Props) {
                 subColor={colors.mutedForeground}
               />
             ))}
-          </View>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              onPress={() => handleNav("/profile/info" as any)}
-              style={[styles.footerBtn, { borderColor: colors.border }]}
-            >
-              <Ionicons name="settings-outline" size={18} color={colors.mutedForeground} />
-              <Text style={[styles.footerBtnText, { color: colors.mutedForeground }]}>Paramètres</Text>
-            </TouchableOpacity>
-            <Text style={[styles.versionText, { color: colors.mutedForeground }]}>Jatek v1.0 · Made with 💛</Text>
-          </View>
+            {/* Footer inside scroll so it's never clipped */}
+            <View style={styles.footer}>
+              <TouchableOpacity
+                onPress={() => handleNav("/profile/info" as any)}
+                style={[styles.footerBtn, { borderColor: colors.border }]}
+              >
+                <Ionicons name="settings-outline" size={18} color={colors.mutedForeground} />
+                <Text style={[styles.footerBtnText, { color: colors.mutedForeground }]}>Paramètres</Text>
+              </TouchableOpacity>
+              <Text style={[styles.versionText, { color: colors.mutedForeground }]}>Jatek v1.0 · Made with 💛</Text>
+            </View>
+          </ScrollView>
         </Animated.View>
       </View>
     </Modal>
@@ -255,7 +268,7 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     shadowOffset: { width: 6, height: 0 },
     elevation: 16,
-    overflow: "hidden",
+    // No overflow:hidden here — it was clipping text and content near border-radius edges
   },
   brandHeader: {
     paddingHorizontal: 18,
@@ -288,6 +301,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
+  itemsScroll: { flex: 1 },
   itemsWrap: { paddingHorizontal: 10, paddingTop: 4, gap: 2 },
   itemRow: {
     flexDirection: "row",
@@ -306,7 +320,7 @@ const styles = StyleSheet.create({
   },
   itemLabel: { fontFamily: "Inter_500Medium", fontSize: 14, letterSpacing: -0.1, flex: 1 },
 
-  footer: { marginTop: "auto", paddingHorizontal: 18, gap: 10 },
+  footer: { marginTop: 20, paddingHorizontal: 8, gap: 10 },
   footerBtn: {
     flexDirection: "row",
     alignItems: "center",
