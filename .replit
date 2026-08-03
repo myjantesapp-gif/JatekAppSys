@@ -10,17 +10,8 @@ build = ["bash", "scripts/build-production.sh"]
   args = ["pnpm", "store", "prune"]
   env = { "CI" = "true" }
 
-  [workflows]
+[workflows]
 runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "artifacts/jatek-mobile: web"
 
 [[workflows.workflow]]
 name = "artifacts/jatek-mobile: web"
@@ -33,6 +24,111 @@ waitForPort = 3000
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "artifacts/jatek-landing: web"
+author = "agent"
+mode = "sequential"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+artifactId = "artifacts/jatek-landing"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/jatek-landing run dev"
+cwd = "./artifacts/jatek-landing"
+waitForPort = 5000
+ensurePreviewReachable = "/"
+router = "path"
+
+[workflows.workflow.tasks.env]
+PORT = "5000"
+BASE_PATH = "/"
+
+[[workflows.workflow]]
+name = "artifacts/mockup-sandbox: Component Preview Server"
+author = "agent"
+mode = "sequential"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+artifactId = "XegfDyZt7HqfW2Bb8Ghoy"
+isCanvasWorkflow = true
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/mockup-sandbox run dev"
+cwd = "./artifacts/mockup-sandbox"
+waitForPort = 8081
+ensurePreviewReachable = "/"
+router = "path"
+
+[workflows.workflow.tasks.env]
+PORT = "8081"
+BASE_PATH = "/__mockup"
+
+[[workflows.workflow]]
+name = "artifacts/jatek-mobile: expo"
+author = "agent"
+mode = "sequential"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+artifactId = "artifacts/jatek-mobile"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/jatek-mobile run dev"
+cwd = "./artifacts/jatek-mobile"
+waitForPort = 25896
+ensurePreviewReachable = "/status"
+router = "expo-domain"
+
+[workflows.workflow.tasks.env]
+PORT = "25896"
+BASE_PATH = "/mobile/"
+
+[[workflows.workflow]]
+name = "artifacts/backend-dashboard: web"
+author = "agent"
+mode = "sequential"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+artifactId = "artifacts/backend-dashboard"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/backend-dashboard run dev"
+cwd = "./artifacts/backend-dashboard"
+waitForPort = 19167
+ensurePreviewReachable = "/"
+router = "path"
+
+[workflows.workflow.tasks.env]
+PORT = "19167"
+BASE_PATH = "/admin/"
+
+[[workflows.workflow]]
+name = "artifacts/api-server: API Server"
+author = "agent"
+mode = "sequential"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+artifactId = "3B4_FFSkEVBkAeYMFRJ2e"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/api-server run dev"
+cwd = "./artifacts/api-server"
+waitForPort = 8080
+ensurePreviewReachable = "/"
+router = "path"
+
+[workflows.workflow.tasks.env]
+PORT = "8080"
 
   [agent]
   stack = "BEST_EFFORT_FALLBACK"
