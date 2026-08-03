@@ -312,8 +312,9 @@ export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantO
                     activeOpacity={0.85}
                     style={[styles.addBtn, { backgroundColor: colors.primary }]}
                   >
-                    <Text style={styles.addBtnText}>Ajouter au panier</Text>
-                    <Text style={styles.addBtnPrice}>{total.toFixed(0)} MAD</Text>
+                    <Text style={styles.addBtnText} numberOfLines={1}>
+                      Ajouter au panier
+                    </Text>
                   </TouchableOpacity>
                 </Animated.View>
               </>
@@ -477,9 +478,8 @@ const styles = StyleSheet.create({
   addBtn: {
     height: 56,
     borderRadius: 30,
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 22,
     shadowColor: "#E2006A",
     shadowOpacity: 0.3,
@@ -488,7 +488,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   addBtnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
-  addBtnPrice: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold", opacity: 0.95 },
 
   closedBar: {
     flex: 1,
