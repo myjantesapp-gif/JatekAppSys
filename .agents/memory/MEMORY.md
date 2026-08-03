@@ -4,3 +4,4 @@
 - [Jatek mobile EAS build setup](jatek-mobile-eas.md) — EAS + pnpm workspace quirks: use app.config.js not .ts, set PNPM_VERSION=10.0.0, run via node_modules/.bin/eas.
 - [GitHub push auth](git-push-auth.md) — push via GIT_TOKEN as Basic auth header, never in the remote URL; Git pane pushes fail until user connects GitHub to Replit.
 - [Admin profile verification](admin-profile-verification.md) — admin-created restaurants/drivers are operationally verified and complete; never invent legal identity data for legacy profiles.
+- [Mobile production Expo project](mobile-production-expo-project.md) — published mobile manifest fallback must match the current EAS project and preview channel, or the Android QR/build fails.
