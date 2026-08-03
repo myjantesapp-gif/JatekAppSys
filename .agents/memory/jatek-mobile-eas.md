@@ -7,7 +7,7 @@ description: EAS build quirks for the jatek-mobile pnpm monorepo workspace — c
 
 1. **Use `app.config.js`, not `app.config.ts`** — EAS CLI reads the config via its own transpiler, which fails on TypeScript with `Cannot read properties of undefined (reading 'CommonJS')`. The plain JS version works reliably.
 
-2. **Pin pnpm 10+ for EAS** — root `package.json` must have `"packageManager": "pnpm@10.x"` (EAS reads it) AND `PNPM_VERSION` in every build profile env of BOTH eas.json files (repo root + artifacts/jatek-mobile). EAS Cloud's default pnpm can't parse `catalog:` specifiers → `pnpm install --frozen-lockfile` fails.
+2. **Pin pnpm 10+ for EAS AND disable frozen-lockfile** — root `package.json` must have `"packageManager": "pnpm@10.x"` (EAS reads it) AND every build profile env in BOTH eas.json files must have `PNPM_VERSION` + `"npm_config_frozen_lockfile": "false"`. EAS Cloud sets `CI=true` which makes pnpm auto-enable `--frozen-lockfile`; combined with the 69 `catalog:` specifiers in the lockfile this causes the build to fail even with the correct pnpm version. The `npm_config_frozen_lockfile=false` env var overrides the CI-triggered behavior.
 
 2b. **Two eas.json files exist** — a repo-root `eas.json` (with `cli.appRoot: artifacts/jatek-mobile`) used by expo.dev GitHub-triggered builds, and `artifacts/jatek-mobile/eas.json` used by local CLI builds. Keep them in sync.
 
