@@ -11,9 +11,9 @@
       "autoIncrement": true,
       "env": {
         "PNPM_VERSION": "10.26.1",
-        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
-        "EXPO_OWNER": "rbe2656s-team",
-        "EXPO_SLUG": "jatekclient",
+        "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
+        "EXPO_OWNER": "straightpath",
+        "EXPO_SLUG": "jatekmobile",
         "npm_config_frozen_lockfile": "false"
       },
       "android": {
@@ -28,10 +28,10 @@
       "credentialsSource": "remote",
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
+        "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "rbe2656s-team",
-        "EXPO_SLUG": "jatekclient",
+        "EXPO_OWNER": "straightpath",
+        "EXPO_SLUG": "jatekmobile",
         "npm_config_frozen_lockfile": "false"
       },
       "android": {
@@ -44,10 +44,10 @@
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "f30be777-7e22-4b16-b0fc-cf4373432b6f",
+        "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "rbe2656s-team",
-        "EXPO_SLUG": "jatekclient",
+        "EXPO_OWNER": "straightpath",
+        "EXPO_SLUG": "jatekmobile",
         "npm_config_frozen_lockfile": "false"
       },
       "android": {
