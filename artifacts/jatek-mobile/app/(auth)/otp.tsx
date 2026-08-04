@@ -17,8 +17,19 @@ export default function OtpScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { phone, demoOtp, channel } = useLocalSearchParams<{ phone: string; demoOtp: string; channel: string }>();
-  const isWhatsApp = channel === "whatsapp";
+
+  // Support both `phone` (WhatsApp) and `email` identifiers
+  const { phone, email, demoOtp, channel } = useLocalSearchParams<{
+    phone: string;
+    email: string;
+    demoOtp: string;
+    channel: string;
+  }>();
+
+  const identifier = email || phone || "";
+  const isEmail = !!(email && email.includes("@")) || channel === "resend-email" || channel === "email";
+  const isWhatsApp = channel === "whatsapp" || channel === "twilio-whatsapp" || (!isEmail && !!phone);
+
   const { login } = useAuth();
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
@@ -38,12 +49,11 @@ export default function OtpScreen() {
     }
   }, [countdown]);
 
-  // Auto-fill demo OTP for testing (shown in dev mode / when no SMS provider configured)
+  // Auto-fill demo OTP
   useEffect(() => {
     if (demoOtp && demoOtp.length === 6) {
       const filled = demoOtp.split("").slice(0, 6);
       setDigits(filled);
-      // Auto-verify after 800ms so the user can see the filled code first
       const t = setTimeout(() => handleVerify(demoOtp), 800);
       return () => clearTimeout(t);
     }
@@ -79,7 +89,11 @@ export default function OtpScreen() {
   const handleVerify = (c = code) => {
     if (c.length < 6) return;
     setError("");
-    verifyOtp.mutate({ data: { phone, code: c } }, {
+    // Pass email or phone depending on how OTP was sent
+    const payload = isEmail
+      ? { email: identifier, code: c }
+      : { phone: identifier, code: c };
+    verifyOtp.mutate({ data: payload as any }, {
       onSuccess: async (res) => {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         if ((res as any).isNewUser) {
@@ -122,7 +136,8 @@ export default function OtpScreen() {
   };
 
   const handleResend = () => {
-    sendOtp.mutate({ data: { phone, channel } as any }, {
+    const payload = isEmail ? { email: identifier } : { phone: identifier };
+    sendOtp.mutate({ data: payload as any }, {
       onSuccess: () => {
         setCountdown(60);
         setDigits(["", "", "", "", "", ""]);
@@ -130,6 +145,20 @@ export default function OtpScreen() {
       },
     });
   };
+
+  // ── Badge config ──────────────────────────────────────────────────────────
+  const badgeBg    = isWhatsApp ? "#25D36618" : isEmail ? colors.primary + "15" : colors.primary + "15";
+  const badgeColor = isWhatsApp ? "#25D366"   : isEmail ? colors.primary        : colors.primary;
+  const badgeIcon: React.ComponentProps<typeof Ionicons>["name"] = isWhatsApp
+    ? "logo-whatsapp"
+    : isEmail
+    ? "mail-outline"
+    : "mail-outline";
+  const badgeLabel = isWhatsApp
+    ? t("otp_via_whatsapp")
+    : isEmail
+    ? t("otp_via_email")
+    : t("otp_via_whatsapp");
 
   if (showNameStep) {
     return (
@@ -180,21 +209,17 @@ export default function OtpScreen() {
         </TouchableOpacity>
 
         {/* Channel badge */}
-        <View style={[styles.channelBadge, { backgroundColor: isWhatsApp ? "#25D36618" : colors.primary + "15" }]}>
-          <Ionicons
-            name={isWhatsApp ? "logo-whatsapp" : "chatbubble-ellipses-outline"}
-            size={16}
-            color={isWhatsApp ? "#25D366" : colors.primary}
-          />
-          <Text style={[styles.channelBadgeText, { color: isWhatsApp ? "#25D366" : colors.primary }]}>
-            {isWhatsApp ? t("otp_via_whatsapp") : t("otp_via_sms")}
+        <View style={[styles.channelBadge, { backgroundColor: badgeBg }]}>
+          <Ionicons name={badgeIcon} size={16} color={badgeColor} />
+          <Text style={[styles.channelBadgeText, { color: badgeColor }]}>
+            {badgeLabel}
           </Text>
         </View>
 
         <Text style={[styles.title, { color: colors.foreground }]}>{t("otp_enter_code")}</Text>
         <Text style={[styles.sub, { color: colors.mutedForeground }]}>
           {t("otp_sent_to")}{" "}
-          <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{phone}</Text>
+          <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{identifier}</Text>
         </Text>
 
         {demoOtp ? (
@@ -299,5 +324,4 @@ const styles = StyleSheet.create({
   },
   btnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_600SemiBold" },
   successIcon: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center" },
-  warning: { color: "#F59E0B" },
 });
