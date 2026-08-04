@@ -18,6 +18,14 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
     } catch {}
     throw new Error(msg);
   }
+  // No body: 204 or empty Content-Length
   if (res.status === 204) return undefined as T;
+  const contentLength = res.headers.get("content-length");
+  if (contentLength === "0") return undefined as T;
+  // Only parse JSON when the response declares it
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json") && !contentType.includes("+json")) {
+    return undefined as T;
+  }
   return (await res.json()) as T;
 }

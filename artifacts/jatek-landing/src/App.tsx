@@ -535,6 +535,7 @@ const Footer = () => (
               <a
                 key={label}
                 href="#"
+                onClick={(e) => e.preventDefault()}
                 className="w-9 h-9 rounded-full bg-white border border-[#EBEBEB] flex items-center justify-center text-xs font-bold text-[#6B7280] hover:bg-brand-pink hover:text-white hover:border-brand-pink transition-colors"
               >
                 {label}

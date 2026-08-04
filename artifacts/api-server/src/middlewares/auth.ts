@@ -79,20 +79,28 @@ function otherInherits(user: DecodedUser, roles: string[]): boolean {
 
 /** Attaches userId/userName/userRole to req when a valid token is present; never blocks. */
 export async function attachAuth(req: AuthedRequest, _res: Response, next: NextFunction): Promise<void> {
-  const user = await decodeUser(req);
-  if (user) setAuthOnReq(req, user);
-  next();
+  try {
+    const user = await decodeUser(req);
+    if (user) setAuthOnReq(req, user);
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
 /** Rejects with 401 when no valid token is present. */
 export async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction): Promise<void> {
-  const user = await decodeUser(req);
-  if (!user) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
+  try {
+    const user = await decodeUser(req);
+    if (!user) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    setAuthOnReq(req, user);
+    next();
+  } catch (err) {
+    next(err);
   }
-  setAuthOnReq(req, user);
-  next();
 }
 
 /**
