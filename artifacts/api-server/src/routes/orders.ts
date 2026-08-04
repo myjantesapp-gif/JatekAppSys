@@ -383,7 +383,6 @@ router.post("/orders", requireAuth, async (req: AuthedRequest, res, next): Promi
   // phantom promo-usage counter increments.
   let createdOrderId: number;
   let pointsEarned: number;
-  let referralNotification: { referrerId: number; creditAmount: number; userName: string } | null = null;
 
   await db.transaction(async (tx) => {
     const [order] = await tx.insert(ordersTable).values({
@@ -448,42 +447,11 @@ router.post("/orders", requireAuth, async (req: AuthedRequest, res, next): Promi
         loyaltyPoints: (user?.loyaltyPoints || 0) + pointsEarned,
       }).where(eq(usersTable.id, userId));
     }
-
-    // Credit referrer if this is the user's first order
-    const allUserOrders = await tx.select({ id: ordersTable.id }).from(ordersTable).where(eq(ordersTable.userId, userId));
-    if (allUserOrders.length === 1 && user?.referredBy) {
-      const [referral] = await tx
-        .select()
-        .from(referralsTable)
-        .where(and(eq(referralsTable.referrerId, user.referredBy), eq(referralsTable.referredId, userId)))
-        .limit(1);
-      if (referral && referral.status === "pending") {
-        const [referrer] = await tx.select().from(usersTable).where(eq(usersTable.id, user.referredBy)).limit(1);
-        if (referrer) {
-          await tx.update(usersTable).set({
-            walletBalance: referrer.walletBalance + referral.creditAmount,
-          }).where(eq(usersTable.id, referrer.id));
-          await tx.update(referralsTable).set({
-            status: "completed",
-            completedAt: new Date(),
-          }).where(eq(referralsTable.id, referral.id));
-          referralNotification = { referrerId: referrer.id, creditAmount: referral.creditAmount, userName: user.name ?? "un ami" };
-        }
-      }
-    }
+    // Referral credit is intentionally NOT applied here. It is awarded only
+    // once the customer's first order is actually *delivered* so that a
+    // placed-then-cancelled order cannot be exploited to farm referral credit.
+    // See POST /orders/:id/confirm-delivery for the credit logic.
   });
-
-  // Side effects outside the transaction (failures here don't roll back the order)
-  if (referralNotification) {
-    const { referrerId, creditAmount, userName } = referralNotification;
-    pushNotification(
-      referrerId,
-      "referral",
-      "Parrainage réussi ! 🎉",
-      `Votre ami ${userName} a passé sa première commande. ${creditAmount} MAD ont été ajoutés à votre portefeuille !`,
-      { creditAmount },
-    ).catch(() => {});
-  }
 
   const orderWithItems = await getOrderWithItems(createdOrderId!);
 
@@ -737,18 +705,7 @@ router.post("/orders/:id/accept-delivery", requireAuth, async (req: AuthedReques
     return;
   }
 
-  // Only accept if still "ready" and unassigned
-  const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId)).limit(1);
-  if (!existing) { res.status(404).json({ error: "Order not found" }); return; }
-  if (existing.status !== "ready") {
-    res.status(409).json({ error: "Order is no longer available for pickup" });
-    return;
-  }
-  if (existing.driverId) {
-    res.status(409).json({ error: "Order already assigned to another driver" });
-    return;
-  }
-
+  // Validate driver + authorization before touching the order row
   const [driver] = await db.select().from(driversTable).where(eq(driversTable.id, driverId)).limit(1);
   if (!driver) { res.status(404).json({ error: "Driver not found" }); return; }
 
@@ -768,11 +725,27 @@ router.post("/orders/:id/accept-delivery", requireAuth, async (req: AuthedReques
     return;
   }
 
+  // Atomic conditional UPDATE — only succeeds when the order is still "ready"
+  // AND has no driver assigned. This eliminates the read-then-write race where
+  // two drivers both pass the pre-checks and then both perform the update.
   const [order] = await db
     .update(ordersTable)
     .set({ driverId, status: "picked_up" })
-    .where(eq(ordersTable.id, orderId))
+    .where(and(
+      eq(ordersTable.id, orderId),
+      eq(ordersTable.status, "ready"),
+      isNull(ordersTable.driverId),
+    ))
     .returning();
+
+  if (!order) {
+    // Either the order doesn't exist, is no longer "ready", or was already
+    // claimed by another driver between the driver lookup and this update.
+    const [check] = await db.select({ id: ordersTable.id }).from(ordersTable).where(eq(ordersTable.id, orderId)).limit(1);
+    if (!check) { res.status(404).json({ error: "Order not found" }); return; }
+    res.status(409).json({ error: "Order already taken or no longer available" });
+    return;
+  }
 
   const orderWithItems = await getOrderWithItems(order.id);
 
@@ -857,6 +830,51 @@ router.post("/orders/:id/confirm-delivery", requireAuth, async (req: AuthedReque
       }).where(eq(driversTable.id, order.driverId));
     }
   }
+
+  // Credit referrer if this is the customer's first *delivered* order.
+  // Doing it here (not at placement) prevents cancelled-order abuse.
+  (async () => {
+    try {
+      const [customer] = await db.select().from(usersTable).where(eq(usersTable.id, order.userId)).limit(1);
+      if (customer?.referredBy) {
+        const allDelivered = await db
+          .select({ id: ordersTable.id })
+          .from(ordersTable)
+          .where(and(eq(ordersTable.userId, order.userId), eq(ordersTable.status, "delivered")));
+        if (allDelivered.length === 1) {
+          const [referral] = await db
+            .select()
+            .from(referralsTable)
+            .where(and(
+              eq(referralsTable.referrerId, customer.referredBy),
+              eq(referralsTable.referredId, order.userId),
+            ))
+            .limit(1);
+          if (referral && referral.status === "pending") {
+            const [referrer] = await db.select().from(usersTable).where(eq(usersTable.id, customer.referredBy)).limit(1);
+            if (referrer) {
+              await db.update(usersTable).set({
+                walletBalance: referrer.walletBalance + referral.creditAmount,
+              }).where(eq(usersTable.id, referrer.id));
+              await db.update(referralsTable).set({
+                status: "completed",
+                completedAt: new Date(),
+              }).where(eq(referralsTable.id, referral.id));
+              pushNotification(
+                referrer.id,
+                "referral",
+                "Parrainage réussi ! 🎉",
+                `Votre ami ${customer.name ?? "un ami"} a reçu sa première commande. ${referral.creditAmount} MAD ont été ajoutés à votre portefeuille !`,
+                { creditAmount: referral.creditAmount },
+              ).catch(() => {});
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[confirm-delivery] referral credit failed:", err);
+    }
+  })();
 
   const orderWithItems = await getOrderWithItems(order.id);
   publish(`order:${order.id}`, "order_status", { orderId: order.id, status: "delivered", order: orderWithItems });

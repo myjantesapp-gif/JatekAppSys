@@ -13,9 +13,13 @@
 import webPush from "web-push";
 import * as fs from "fs";
 import * as path from "path";
-import * as os from "os";
 
-const KEY_FILE = path.join(os.tmpdir(), ".jatek_vapid_keys.json");
+// Persist in the workspace directory so keys survive server restarts in both
+// development and Replit hosted environments. /tmp is ephemeral and gets wiped
+// on every restart, causing all existing browser push subscriptions to break.
+// For production deployments, set VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY as
+// Replit Secrets — those take precedence and need no file.
+const KEY_FILE = path.resolve(__dirname, "../../..", ".local/vapid_keys.json");
 
 export const VAPID_SUBJECT = process.env.VAPID_SUBJECT ?? "mailto:admin@jatek.app";
 
