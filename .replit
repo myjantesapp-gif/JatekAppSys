@@ -199,11 +199,9 @@ VAPID_SUBJECT = "mailto:admin@jatek.ma"
 TWILIO_FROM_NUMBER = "+15072600620"
 
   [userenv.development]
-INFOBIP_WA_SENDER = "+44 7860 088970"
   EXPO_PUBLIC_DOMAIN = "ma.jatek.app"
 
   [userenv.production]
-INFOBIP_WA_SENDER = "+44 7860 088970"
   EXPO_PUBLIC_DOMAIN = "ma.jatek.app"
 ALLOWED_ORIGINS = "https://c242aedf-c2ef-40b5-8095-e3992aa34a14-00-1y412fgtbqgy8.kirk.replit.dev,https://ma.jatek.app"
 
