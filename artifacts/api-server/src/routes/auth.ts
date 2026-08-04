@@ -32,8 +32,8 @@ function normalizePhone(phone: string): string {
   return p;
 }
 
-// OTP messaging is delegated to lib/otpMessaging.ts which implements the
-// Infobip-WhatsApp → Infobip-SMS → Twilio-WhatsApp → Twilio-SMS fallback chain.
+// OTP messaging is delegated to lib/otpMessaging.ts. Phone OTP is WhatsApp-only;
+// email OTP is delivered through the configured email provider.
 
 // ─── Register (email/password, for admin/driver panel) ──────────────────────
 router.post("/auth/register", async (req, res): Promise<void> => {
@@ -99,10 +99,9 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   res.json({ token, user: safeUser });
 });
 
-// ─── Send OTP (multi-provider fallback chain) ─────────────────────────────────
-// Always walks Infobip-WhatsApp → Infobip-SMS → Twilio-WhatsApp → Twilio-SMS,
-// stopping on the first success. The `channel` request field is accepted for
-// backwards compat but no longer changes the order — that's by design.
+// ─── Send OTP (email or WhatsApp) ──────────────────────────────────────────────
+// Email uses the email provider; phone uses WhatsApp providers only. The
+// `channel` request field is accepted for backwards compatibility.
 router.post("/auth/send-otp", async (req, res): Promise<void> => {
   const { phone, email } = req.body;
 
@@ -191,10 +190,10 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     return;
   }
 
-  // Support both phone OTP and email OTP — normalise the identifier the same
-  // way send-otp did so the DB lookup finds the right record.
+  // Support both phone OTP and email OTP — normalize the identifier the same
+  // way send-otp did so the OTP record lookup finds the right record.
   const isEmailMode = !phone && email && typeof email === "string" && email.includes("@");
-  const normalizedPhone = isEmailMode
+  const identifier = isEmailMode
     ? email.trim().toLowerCase()
     : normalizePhone((phone as string).trim());
 
@@ -205,7 +204,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     .from(otpCodesTable)
     .where(
       and(
-        eq(otpCodesTable.phone, normalizedPhone),
+        eq(otpCodesTable.phone, identifier),
         eq(otpCodesTable.used, false),
         gt(otpCodesTable.expiresAt, now)
       )
@@ -243,22 +242,30 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   const [existingUser] = await db
     .select()
     .from(usersTable)
-    .where(eq(usersTable.phone, normalizedPhone))
+    .where(isEmailMode
+      ? eq(usersTable.email, identifier)
+      : eq(usersTable.phone, identifier))
     .limit(1);
 
   let user = existingUser;
   const isNewUser = !user;
 
   if (!user) {
-    const userName = name?.trim() || `User ${normalizedPhone.slice(-4)}`;
+    const userName = name?.trim() || (
+      isEmailMode
+        ? identifier.split("@")[0] || "Jatek user"
+        : `User ${identifier.slice(-4)}`
+    );
     // OTP-created accounts are always customers — elevated roles must be assigned via the admin panel.
     const userRole = "customer";
-    const placeholderEmail = `sms_${normalizedPhone.replace(/[^0-9]/g, "")}@jatek.local`;
+    const accountEmail = isEmailMode
+      ? identifier
+      : `phone_${identifier.replace(/[^0-9]/g, "")}@jatek.local`;
     const dummyPassword = await bcrypt.hash(crypto.randomUUID(), 10);
 
     const [newUser] = await db.insert(usersTable).values({
-      name: userName, email: placeholderEmail, password: dummyPassword,
-      role: userRole, phone: normalizedPhone, loyaltyPoints: 0, isActive: true,
+      name: userName, email: accountEmail, password: dummyPassword,
+      role: userRole, phone: isEmailMode ? null : identifier, loyaltyPoints: 0, isActive: true,
     }).returning();
 
     if ((userRole as string) === "driver") {
@@ -431,7 +438,7 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
       await sendOtpEmail(normalizedEmail, code, messageBody);
     }
   } catch (err: any) {
-    // If phone SMS fails, also try email as fallback (when we have a real email)
+    // If WhatsApp delivery fails, also try email as fallback (when we have a real email)
     if (hasPhone && isRealEmail) {
       try {
         await sendOtpEmail(normalizedEmail, code, messageBody);
