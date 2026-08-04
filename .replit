@@ -197,6 +197,7 @@ packages = ["eas-cli", "unzipNLS", "gir-rs"]
 VAPID_PUBLIC_KEY = "BGQrF1lFMTnMegWotpDT8shZuP-R-1BmR__JzuODouxvvAmMZj8ziM18Xqszzypuj-pK5yMS-Yu3pLu9X9Gb2Fg"
 VAPID_SUBJECT = "mailto:admin@jatek.ma"
 TWILIO_FROM_NUMBER = "+15072600620"
+INFOBIP_BASE_URL = "w4kgd8.api.infobip.com"
 
   [userenv.development]
   EXPO_PUBLIC_DOMAIN = "ma.jatek.app"

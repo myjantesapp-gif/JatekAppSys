@@ -1,10 +1,8 @@
 // OTP messaging with multi-provider fallback chain.
 //
-// SMS/WhatsApp order:
-//   1. Twilio WhatsApp   (primary — env: TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_WA_FROM)
-//   2. Twilio SMS        (env: TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_FROM_NUMBER)
-//   3. Infobip WhatsApp  (fallback — env: INFOBIP_API_KEY + INFOBIP_BASE_URL + INFOBIP_WA_SENDER)
-//   4. Infobip SMS       (fallback — env: INFOBIP_API_KEY + INFOBIP_BASE_URL)
+// Phone OTP order (WhatsApp only):
+//   1. Twilio WhatsApp   (primary — env: TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN)
+//   2. Infobip WhatsApp  (fallback — env: INFOBIP_API_KEY + INFOBIP_BASE_URL + INFOBIP_WA_SENDER)
 //
 // Email: Resend (RESEND_API_KEY + RESEND_FROM_EMAIL)
 //
@@ -16,9 +14,7 @@
 
 export type OtpChannel =
   | "infobip-whatsapp"
-  | "infobip-sms"
   | "twilio-whatsapp"
-  | "twilio-sms"
   | "resend-email";
 
 export interface SendOtpResult {
@@ -41,30 +37,6 @@ function infobipBaseHost(): string | undefined {
 
 function infobipConfigured(): boolean {
   return !!(process.env.INFOBIP_API_KEY && infobipBaseHost());
-}
-
-async function sendInfobipSms(to: string, body: string): Promise<void> {
-  const apiKey = process.env.INFOBIP_API_KEY!;
-  const baseUrl = infobipBaseHost()!;
-  const sender = process.env.INFOBIP_SENDER || "Jatek";
-  const url = `https://${baseUrl}/sms/2/text/advanced`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `App ${apiKey}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      messages: [{ from: sender, destinations: [{ to }], text: body }],
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Infobip SMS ${res.status}: ${err.slice(0, 200)}`);
-  }
 }
 
 async function sendInfobipWhatsapp(to: string, body: string): Promise<void> {
@@ -95,10 +67,8 @@ async function sendInfobipWhatsapp(to: string, body: string): Promise<void> {
 // Required env vars:
 //   TWILIO_ACCOUNT_SID  → Account SID (AC...)
 //   TWILIO_AUTH_TOKEN   → Auth Token
-//   TWILIO_FROM_NUMBER  → Sender phone number
 // Optional:
-//   TWILIO_WA_FROM              → WhatsApp sender (default: Twilio sandbox +14155238886)
-//   TWILIO_MESSAGING_SERVICE_SID → Messaging Service SID (overrides FROM number for SMS)
+//   TWILIO_WA_FROM      → WhatsApp sender (default: Twilio sandbox +14155238886)
 
 function twilioAuthHeader(): string {
   const accountSid = process.env.TWILIO_ACCOUNT_SID!;
@@ -131,24 +101,6 @@ async function twilioPost(path: string, params: Record<string, string>): Promise
       (data?.code ? ` (code ${data.code})` : "")
     );
   }
-}
-
-async function sendTwilioSms(to: string, body: string): Promise<void> {
-  const from               = process.env.TWILIO_FROM_NUMBER;
-  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
-
-  if (!from && !messagingServiceSid) {
-    throw new Error("Twilio SMS sender not configured (set TWILIO_FROM_NUMBER)");
-  }
-
-  const params: Record<string, string> = { To: to, Body: body };
-  if (messagingServiceSid) {
-    params.MessagingServiceSid = messagingServiceSid;
-  } else {
-    params.From = from!;
-  }
-
-  await twilioPost("Messages.json", params);
 }
 
 async function sendTwilioWhatsapp(to: string, body: string): Promise<void> {
@@ -234,8 +186,8 @@ export async function sendOtpEmail(
   }
 }
 
-// ─── Public: WhatsApp/SMS OTP ─────────────────────────────────────────────────
-// WhatsApp is tried first (preferred channel), SMS is fallback.
+// ─── Public: WhatsApp OTP ─────────────────────────────────────────────────────
+// Phone OTP is WhatsApp-only. Provider failure is surfaced instead of sending SMS.
 export async function sendOtpMessage(
   to: string,
   body: string
@@ -246,27 +198,17 @@ export async function sendOtpMessage(
 
   type Step = { channel: OtpChannel; available: boolean; fn: () => Promise<void> };
   const steps: Step[] = [
-    // ── Twilio (primary) ────────────────────────────────────────────────────
+    // ── Twilio WhatsApp (primary) ────────────────────────────────────────────
     {
       channel: "twilio-whatsapp",
       available: twilioReady,
       fn: () => sendTwilioWhatsapp(to, body),
     },
-    {
-      channel: "twilio-sms",
-      available: twilioReady,
-      fn: () => sendTwilioSms(to, body),
-    },
-    // ── Infobip (fallback) ──────────────────────────────────────────────────
+    // ── Infobip WhatsApp (fallback) ──────────────────────────────────────────
     {
       channel: "infobip-whatsapp",
       available: infobipReady && !!process.env.INFOBIP_WA_SENDER,
       fn: () => sendInfobipWhatsapp(to, body),
-    },
-    {
-      channel: "infobip-sms",
-      available: infobipReady,
-      fn: () => sendInfobipSms(to, body),
     },
   ];
 

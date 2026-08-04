@@ -150,7 +150,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
   const canExposeDemoOtp = isDev && !providerReady && isLocalWorkspace;
 
   let actualChannel: string = "none";
-  let smsSent = false;
+  let otpSent = false;
   let deliveryFailed = false;
 
   try {
@@ -161,7 +161,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
       result = await sendOtpMessage(identifier, messageBody);
     }
     actualChannel = result.channel;
-    smsSent = true;
+    otpSent = true;
   } catch (err: any) {
     deliveryFailed = true;
     console.error(`[OTP] all providers failed for ${identifier}:`, err?.message ?? err);
@@ -177,7 +177,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     message: deliveryFailed
       ? `Code de démo (aucun provider configuré) pour ${identifier}`
       : `Code envoyé via ${actualChannel} à ${identifier}`,
-    smsSent,
+    otpSent,
     demoOtp: canExposeDemoOtp ? code : undefined,
   });
 });
