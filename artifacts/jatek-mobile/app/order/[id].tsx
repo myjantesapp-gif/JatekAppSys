@@ -43,6 +43,22 @@ const STEP_KEYS: { key: string; icon: string; labelKey: TKey; descKey: TKey }[] 
 ];
 const STATUS_ORDER = STEP_KEYS.map((s) => s.key);
 
+/**
+ * Normalize intermediate API statuses to their nearest visible step.
+ * Keeps the progress tracker meaningful for every status the API can emit.
+ */
+const STATUS_STEP_MAP: Record<string, string> = {
+  confirmed:           "accepted",
+  driver_at_restaurant:"picked_up",
+  en_route:            "picked_up",
+  out_for_delivery:    "picked_up",
+  in_transit:          "picked_up",
+  completed:           "delivered",
+};
+function normalizeStatus(status: string): string {
+  return STATUS_STEP_MAP[status] ?? status;
+}
+
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
@@ -183,7 +199,7 @@ export default function OrderDetailScreen() {
     lastStatus.current = order.status;
   }, [order?.status, order?.id]);
 
-  const currentIdx = order ? STATUS_ORDER.indexOf(order.status) : -1;
+  const currentIdx = order ? STATUS_ORDER.indexOf(normalizeStatus(order.status)) : -1;
 
   if (isLoading || !order) {
     return (
@@ -202,7 +218,7 @@ export default function OrderDetailScreen() {
   // destination-only view while the driver is still being located.
   const driverAssigned = !!order.driverId;
   const inFlight = !isCompleted && !isCancelled;
-  const PRE_PICKUP_STATUSES = ["accepted", "preparing", "ready"];
+  const PRE_PICKUP_STATUSES = ["accepted", "confirmed", "preparing", "ready"];
   const isPrePickup = PRE_PICKUP_STATUSES.includes(order.status);
   // Pre-pickup: show restaurant→client route using restaurant as origin.
   // Post-pickup: show driver→client route. Falls back to destination pin if no driver pos.

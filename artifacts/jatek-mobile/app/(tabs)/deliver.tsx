@@ -99,7 +99,7 @@ export default function DeliverScreen() {
   const isOnline = !!myDriver?.isAvailable;
   const profileComplete = !!(myDriver as any)?.profileCompletedAt;
   const activeDelivery = myOrders?.find((o) =>
-    ["ready", "picked_up"].includes(o.status)
+    ["ready", "picked_up", "driver_at_restaurant", "en_route", "out_for_delivery"].includes(o.status ?? "")
   );
 
   // Load available orders on mount + when becoming online

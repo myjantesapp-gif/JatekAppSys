@@ -7,7 +7,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getApiBase } from "@/lib/api";
+import { deleteMyAccount } from "@/lib/api";
 import { WaveEdge } from "@/components/WaveEdge";
 import { useCart } from "@/contexts/CartContext";
 import { AddressQuickPicker } from "@/components/AddressQuickPicker";
@@ -79,32 +79,22 @@ export default function ProfileScreen() {
     if (!token) return;
     setDeleting(true);
     try {
-      const res = await fetch(`${getApiBase()}/api/auth/me`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        setDeleteModal(false);
-        await logout();
-        router.replace("/(auth)/welcome");
-      } else {
-        friendly.show({
-          tone: "error",
-          icon: "alert-circle-outline",
-          title: "Suppression impossible",
-          message: "La suppression a échoué. Veuillez réessayer dans un instant.",
-          primary: { label: "OK" },
-          hideSecondary: true,
-        });
-      }
+      await deleteMyAccount();
+      setDeleteModal(false);
+      await logout();
+      router.replace("/(auth)/welcome");
     } catch {
       friendly.show({
         tone: "error",
         icon: "cloud-offline-outline",
-        title: "Connexion perdue",
-        message: "Impossible de contacter le serveur. Vérifiez votre connexion Internet.",
+        title: "Suppression impossible",
+        message: "La suppression a échoué. Vérifiez votre connexion Internet et réessayez.",
         primary: { label: "OK" },
         hideSecondary: true,
       });
+    } finally {
+      setDeleting(false);
     }
-    finally { setDeleting(false); }
   };
 
   // GUEST / LOGGED-OUT VIEW

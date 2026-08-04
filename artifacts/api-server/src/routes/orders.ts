@@ -378,104 +378,120 @@ router.post("/orders", requireAuth, async (req: AuthedRequest, res, next): Promi
   const total = Math.max(0, subtotal + deliveryFee - discountAmount);
   const reference = await generateUniqueOrderReference();
 
-  const [order] = await db.insert(ordersTable).values({
-    reference,
-    userId,
-    restaurantId,
-    restaurantName: restaurant.name,
-    userName: user?.name || "Customer",
-    status: "pending",
-    subtotal,
-    deliveryFee,
-    discountAmount,
-    total,
-    deliveryAddress,
-    notes: notes ?? null,
-    estimatedDeliveryTime: restaurant.deliveryTime || 30,
-    deliveryType: deliveryType ?? "asap",
-    scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
-    isContactless: isContactless ?? false,
-    promoCode: promoCode ? promoCode.toUpperCase().trim() : null,
-    paymentMethod: paymentMethod ?? "cash",
-  }).returning();
+  // Wrap all DB writes in a single transaction so a mid-flight failure
+  // (e.g. orderItems insert fails) doesn't leave an orphaned order row or
+  // phantom promo-usage counter increments.
+  let createdOrderId: number;
+  let pointsEarned: number;
+  let referralNotification: { referrerId: number; creditAmount: number; userName: string } | null = null;
 
-  await db.insert(orderItemsTable).values(
-    orderItemsData.map((i) => ({ ...i, orderId: order.id }))
-  );
-
-  // Persist aggregated item options into the order notes for kitchen readability
-  if (orderItemsData.some((i) => i.selectedSize || i.selectedExtras)) {
-    const optionsNotes = orderItemsData
-      .filter((i) => i.selectedSize || i.selectedExtras)
-      .map((i) => {
-        const parts = [i.menuItemName, `x${i.quantity}`];
-        if (i.selectedSize) parts.push(`Taille: ${i.selectedSize}`);
-        if (i.selectedExtras) parts.push(`Extras: ${JSON.parse(i.selectedExtras).join(", ")}`);
-        return parts.join(" — ");
-      })
-      .join("\n");
-    const updatedNotes = [notes, "---", "Options :", optionsNotes].filter(Boolean).join("\n");
-    await db.update(ordersTable).set({ notes: updatedNotes }).where(eq(ordersTable.id, order.id));
-  }
-
-  // Record promo code usage and increment counter — done after order insert so a
-  // failed insert doesn't leave a phantom usage increment.
-  if (appliedPromoId) {
-    await db.insert(promoCodeUsagesTable).values({
-      promoCodeId: appliedPromoId,
+  await db.transaction(async (tx) => {
+    const [order] = await tx.insert(ordersTable).values({
+      reference,
       userId,
-      orderId: order.id,
+      restaurantId,
+      restaurantName: restaurant.name,
+      userName: user?.name || "Customer",
+      status: "pending",
+      subtotal,
+      deliveryFee,
       discountAmount,
-    });
-    await db.update(promoCodesTable)
-      .set({ usedCount: sql`${promoCodesTable.usedCount} + 1` })
-      .where(eq(promoCodesTable.id, appliedPromoId));
-  }
+      total,
+      deliveryAddress,
+      notes: notes ?? null,
+      estimatedDeliveryTime: restaurant.deliveryTime || 30,
+      deliveryType: deliveryType ?? "asap",
+      scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+      isContactless: isContactless ?? false,
+      promoCode: promoCode ? promoCode.toUpperCase().trim() : null,
+      paymentMethod: paymentMethod ?? "cash",
+    }).returning();
 
-  // Award loyalty points (based on amount paid after discount)
-  const pointsEarned = Math.floor(total / 10);
-  if (pointsEarned > 0) {
-    await db.update(usersTable).set({
-      loyaltyPoints: (user?.loyaltyPoints || 0) + pointsEarned,
-    }).where(eq(usersTable.id, userId));
-  }
+    createdOrderId = order.id;
 
-  // Credit referrer if this is the user's first completed order path
-  const allUserOrders = await db.select({ id: ordersTable.id }).from(ordersTable).where(eq(ordersTable.userId, userId));
-  if (allUserOrders.length === 1 && user?.referredBy) {
-    const [referral] = await db
-      .select()
-      .from(referralsTable)
-      .where(and(eq(referralsTable.referrerId, user.referredBy), eq(referralsTable.referredId, userId)))
-      .limit(1);
-    if (referral && referral.status === "pending") {
-      const [referrer] = await db.select().from(usersTable).where(eq(usersTable.id, user.referredBy)).limit(1);
-      if (referrer) {
-        await db.update(usersTable).set({
-          walletBalance: referrer.walletBalance + referral.creditAmount,
-        }).where(eq(usersTable.id, referrer.id));
-        await db.update(referralsTable).set({
-          status: "completed",
-          completedAt: new Date(),
-        }).where(eq(referralsTable.id, referral.id));
-        await pushNotification(
-          referrer.id,
-          "referral",
-          "Parrainage réussi ! 🎉",
-          `Votre ami ${user.name} a passé sa première commande. ${referral.creditAmount} MAD ont été ajoutés à votre portefeuille !`,
-          { creditAmount: referral.creditAmount },
-        );
+    await tx.insert(orderItemsTable).values(
+      orderItemsData.map((i) => ({ ...i, orderId: order.id }))
+    );
+
+    // Persist aggregated item options into the order notes for kitchen readability
+    if (orderItemsData.some((i) => i.selectedSize || i.selectedExtras)) {
+      const optionsNotes = orderItemsData
+        .filter((i) => i.selectedSize || i.selectedExtras)
+        .map((i) => {
+          const parts = [i.menuItemName, `x${i.quantity}`];
+          if (i.selectedSize) parts.push(`Taille: ${i.selectedSize}`);
+          if (i.selectedExtras) parts.push(`Extras: ${JSON.parse(i.selectedExtras).join(", ")}`);
+          return parts.join(" — ");
+        })
+        .join("\n");
+      const updatedNotes = [notes, "---", "Options :", optionsNotes].filter(Boolean).join("\n");
+      await tx.update(ordersTable).set({ notes: updatedNotes }).where(eq(ordersTable.id, order.id));
+    }
+
+    // Record promo code usage and increment counter
+    if (appliedPromoId) {
+      await tx.insert(promoCodeUsagesTable).values({
+        promoCodeId: appliedPromoId,
+        userId,
+        orderId: order.id,
+        discountAmount,
+      });
+      await tx.update(promoCodesTable)
+        .set({ usedCount: sql`${promoCodesTable.usedCount} + 1` })
+        .where(eq(promoCodesTable.id, appliedPromoId));
+    }
+
+    // Award loyalty points (based on amount paid after discount)
+    pointsEarned = Math.floor(total / 10);
+    if (pointsEarned > 0) {
+      await tx.update(usersTable).set({
+        loyaltyPoints: (user?.loyaltyPoints || 0) + pointsEarned,
+      }).where(eq(usersTable.id, userId));
+    }
+
+    // Credit referrer if this is the user's first order
+    const allUserOrders = await tx.select({ id: ordersTable.id }).from(ordersTable).where(eq(ordersTable.userId, userId));
+    if (allUserOrders.length === 1 && user?.referredBy) {
+      const [referral] = await tx
+        .select()
+        .from(referralsTable)
+        .where(and(eq(referralsTable.referrerId, user.referredBy), eq(referralsTable.referredId, userId)))
+        .limit(1);
+      if (referral && referral.status === "pending") {
+        const [referrer] = await tx.select().from(usersTable).where(eq(usersTable.id, user.referredBy)).limit(1);
+        if (referrer) {
+          await tx.update(usersTable).set({
+            walletBalance: referrer.walletBalance + referral.creditAmount,
+          }).where(eq(usersTable.id, referrer.id));
+          await tx.update(referralsTable).set({
+            status: "completed",
+            completedAt: new Date(),
+          }).where(eq(referralsTable.id, referral.id));
+          referralNotification = { referrerId: referrer.id, creditAmount: referral.creditAmount, userName: user.name ?? "un ami" };
+        }
       }
     }
+  });
+
+  // Side effects outside the transaction (failures here don't roll back the order)
+  if (referralNotification) {
+    const { referrerId, creditAmount, userName } = referralNotification;
+    pushNotification(
+      referrerId,
+      "referral",
+      "Parrainage réussi ! 🎉",
+      `Votre ami ${userName} a passé sa première commande. ${creditAmount} MAD ont été ajoutés à votre portefeuille !`,
+      { creditAmount },
+    ).catch(() => {});
   }
 
-  const orderWithItems = await getOrderWithItems(order.id);
+  const orderWithItems = await getOrderWithItems(createdOrderId!);
 
   // Push real-time event to restaurant
   publish(`restaurant:${restaurantId}`, "order_new", orderWithItems);
 
   // Push notification to customer
-  notifyCustomerStatus(userId, "pending", order.id, restaurant.name);
+  notifyCustomerStatus(userId, "pending", createdOrderId!, restaurant.name);
 
   res.status(201).json(orderWithItems);
   } catch (err) {

@@ -18,6 +18,8 @@ const ACTIVE_STATUSES = new Set([
   "preparing",
   "ready",
   "picked_up",
+  "driver_at_restaurant",
+  "en_route",
   "in_transit",
   "out_for_delivery",
 ]);

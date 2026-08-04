@@ -69,13 +69,15 @@ export default function Monitoring() {
     setBackupLoading(true);
     try {
       const token = localStorage.getItem("jatek_backend_token");
+      if (!token) throw new Error("Session expirée. Veuillez vous reconnecter.");
       const res = await fetch("/api/backend/db/backup", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "Backup échoué");
+        let errMsg = "Backup échoué";
+        try { const err = await res.json(); errMsg = err.error ?? errMsg; } catch {}
+        throw new Error(errMsg);
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

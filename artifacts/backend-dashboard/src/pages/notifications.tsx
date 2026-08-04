@@ -45,6 +45,10 @@ export default function Notifications() {
       setError("Veuillez saisir un numéro de téléphone.");
       return;
     }
+    if (target !== "single" && message.trim().length > 160 * 3) {
+      setError("Message trop long. Réduisez à 3 SMS maximum (480 caractères) pour éviter les coupures.");
+      return;
+    }
     if (!confirm(`Envoyer un SMS à : ${selectedTarget.label} ?\n\n"${message.trim()}"`)) return;
 
     setSending(true);

@@ -49,7 +49,10 @@ export default function OrdersScreen() {
   );
 
   // Match the canonical order status enum used by the API + tracking screen.
-  const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready", "picked_up"];
+  const ACTIVE_STATUSES = [
+    "pending", "accepted", "confirmed", "preparing", "ready",
+    "picked_up", "driver_at_restaurant", "en_route", "out_for_delivery",
+  ];
   const sorted = [...(orders ?? [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
