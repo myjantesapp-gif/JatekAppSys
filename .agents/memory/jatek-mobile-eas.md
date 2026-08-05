@@ -13,7 +13,7 @@ description: EAS build quirks for the jatek-mobile pnpm monorepo workspace — c
 
 2c. **EAS project = `@myjantesapps-team/jatekclient`** (ID `11e89fef-b97e-4823-ba4a-07c2942ba6b0`). The EXPO_TOKEN is a robot on `myjantesapps-team` and cannot access older project IDs (`24f32081…`, `2437ecfc…`). `app.config.js` resolves owner/slug/projectId from `EXPO_OWNER`/`EXPO_SLUG`/`EXPO_PUBLIC_PROJECT_ID` — set them in eas.json profile envs; for CLI commands outside a build profile (e.g. `build:view`), export them in the shell too.
 
-3. **EAS CLI is local to jatek-mobile** — run as `node_modules/.bin/eas` from `artifacts/jatek-mobile/`. Not globally installed. Command: `EXPO_TOKEN=$EXPO_TOKEN node_modules/.bin/eas build --profile <profile> --platform android --non-interactive --no-wait`.
+3. **EAS CLI is local to jatek-mobile** — run as `node_modules/.bin/eas` from `artifacts/jatek-mobile/`. Not globally installed. Command: `EXPO_TOKEN=$EXPO_TOKEN_DEV node_modules/.bin/eas build --profile <profile> --platform android --non-interactive --no-wait`. **Use `EXPO_TOKEN_DEV`** (robot `@riadov001`, role Developer on `straightpath`). `EXPO_TOKEN` is a robot on `rbe2656s-team` (no access to `straightpath`). `EXPO_TOKEN_2` is `myjantes` user (no access to `straightpath`).
 
 4. **OTA update command** — `EXPO_TOKEN=$EXPO_TOKEN node_modules/.bin/eas update --channel production --message "..." --non-interactive` — bundles both iOS and Android, uploads to EAS.
 
