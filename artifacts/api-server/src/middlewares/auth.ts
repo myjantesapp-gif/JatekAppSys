@@ -104,7 +104,16 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
 }
 
 /**
+ * Returns true when a role string has full admin privileges.
+ * Both "admin" and "super_admin" are treated as administrators.
+ */
+export function isAdminRole(role?: string): boolean {
+  return role === "admin" || role === "super_admin";
+}
+
+/**
  * Rejects with 401/403 unless the authenticated user has one of the allowed roles.
+ * super_admin is a wildcard and always passes.
  * A user with role='other' is allowed if their `permissions.inheritedRoles`
  * intersects the allowed roles, or includes 'super_admin' (wildcard).
  */
@@ -115,7 +124,8 @@ export function requireRole(...roles: string[]) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
-    const allowed = roles.includes(user.role) || otherInherits(user, roles);
+    // super_admin is an unconditional wildcard across all role gates
+    const allowed = user.role === "super_admin" || roles.includes(user.role) || otherInherits(user, roles);
     if (!allowed) {
       res.status(403).json({ error: "Forbidden: insufficient permissions" });
       return;

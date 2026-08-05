@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Modal, StyleSheet, Text, View, TouchableOpacity, Image,
   ScrollView, Pressable, Platform, Animated, Easing, ActivityIndicator,
@@ -50,15 +50,6 @@ interface Props {
   }) => void;
 }
 
-// Default rich content (used when no per-item info is provided by the API).
-const DEFAULT_INGREDIENTS = ["Pain frais", "Sauce maison", "Légumes croquants", "Fromage fondant"];
-const DEFAULT_ALLERGENS = ["Gluten", "Lactose"];
-const DEFAULT_TAGS = [
-  { label: "Best-seller", color: "#FF4593", emoji: "🔥" },
-  { label: "Fait maison", color: "#00BFA6", emoji: "👩‍🍳" },
-  { label: "Halal", color: "#7B61FF", emoji: "🥩" },
-];
-
 export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantOpen = true, onClose, onAdd }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -92,16 +83,6 @@ export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantO
         .finally(() => setLoadingOptions(false));
     }
   }, [visible, item?.id, initialQty]);
-
-  // Pseudo-stable variation values per item id so info doesn't jump.
-  const meta = useMemo(() => {
-    const seed = item?.id ?? 1;
-    const rating = (4.2 + ((seed * 13) % 7) * 0.1).toFixed(1);
-    const reviews = 80 + ((seed * 17) % 320);
-    const calories = 280 + ((seed * 23) % 420);
-    const prep = 12 + ((seed * 7) % 18);
-    return { rating, reviews, calories, prep };
-  }, [item?.id]);
 
   if (!item) return null;
 
@@ -165,14 +146,6 @@ export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantO
                 <Ionicons name="close" size={20} color="#0A1B3D" />
               </TouchableOpacity>
 
-              <View style={styles.tagRow}>
-                {DEFAULT_TAGS.slice(0, 2).map((t) => (
-                  <View key={t.label} style={[styles.tagChip, { backgroundColor: t.color }]}>
-                    <Text style={styles.tagEmoji}>{t.emoji}</Text>
-                    <Text style={styles.tagText}>{t.label}</Text>
-                  </View>
-                ))}
-              </View>
             </View>
 
             <View style={styles.body}>
@@ -182,27 +155,9 @@ export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantO
                 <Text style={[styles.price, { color: colors.primary }]}>{item.price.toFixed(0)} MAD</Text>
               </View>
 
-              {/* Meta row: rating · prep · calories */}
-              <View style={styles.metaRow}>
-                <View style={styles.metaChip}>
-                  <Ionicons name="star" size={13} color="#FFC107" />
-                  <Text style={[styles.metaText, { color: colors.heading }]}>{meta.rating}</Text>
-                  <Text style={[styles.metaSub, { color: colors.mutedForeground }]}>({meta.reviews})</Text>
-                </View>
-                <View style={[styles.metaChip, { backgroundColor: "#E0F7F4" }]}>
-                  <Ionicons name="time-outline" size={13} color="#00897B" />
-                  <Text style={[styles.metaText, { color: "#00695C" }]}>{meta.prep} min</Text>
-                </View>
-                <View style={[styles.metaChip, { backgroundColor: "#FFEFD0" }]}>
-                  <Ionicons name="flame-outline" size={13} color="#E65100" />
-                  <Text style={[styles.metaText, { color: "#BF360C" }]}>{meta.calories} kcal</Text>
-                </View>
-              </View>
-
               {/* Description */}
               <Text style={[styles.desc, { color: colors.mutedForeground }]}>
-                {item.description ??
-                  "Préparé avec soin dans la cuisine du restaurant, livré chaud chez vous en quelques minutes. Une explosion de saveurs à chaque bouchée."}
+                {item.description || "Description non renseignée par le restaurant."}
               </Text>
 
               {loadingOptions && (
@@ -266,27 +221,6 @@ export function MenuItemDetailModal({ visible, item, initialQty = 0, restaurantO
                   })}
                 </>
               )}
-
-              {/* Section: Ingrédients */}
-              <SectionTitle label="Ingrédients" emoji="🥗" colors={colors} />
-              <View style={styles.chipWrap}>
-                {DEFAULT_INGREDIENTS.map((ing) => (
-                  <View key={ing} style={[styles.softChip, { backgroundColor: colors.muted }]}>
-                    <Text style={[styles.softChipText, { color: colors.heading }]}>{ing}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Section: Allergènes */}
-              <SectionTitle label="Allergènes" emoji="⚠️" colors={colors} />
-              <View style={styles.chipWrap}>
-                {DEFAULT_ALLERGENS.map((a) => (
-                  <View key={a} style={[styles.allergenChip]}>
-                    <Ionicons name="alert-circle" size={12} color="#B45309" />
-                    <Text style={styles.allergenText}>{a}</Text>
-                  </View>
-                ))}
-              </View>
 
               <View style={{ height: 16 }} />
             </View>

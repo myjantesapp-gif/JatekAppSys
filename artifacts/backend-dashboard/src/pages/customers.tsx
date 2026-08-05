@@ -81,9 +81,14 @@ export default function Customers() {
 
   const handleWalletCredit = async () => {
     if (!selected || !walletForm.amount) return;
+    const parsed = Number(walletForm.amount);
+    if (isNaN(parsed) || parsed === 0) {
+      toast({ title: "Montant invalide", description: "Entrez un montant numérique non nul.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/backend/users/${selected.id}/wallet-credit`, { method: "PATCH", body: JSON.stringify({ amount: Number(walletForm.amount), reason: walletForm.reason }) }) as any;
+      const res = await apiFetch(`/api/backend/users/${selected.id}/wallet-credit`, { method: "PATCH", body: JSON.stringify({ amount: parsed, reason: walletForm.reason }) }) as any;
       toast({ title: res.message ?? "Wallet crédité ✓" });
       setAction(null); invalidate();
     } catch (e: any) { toast({ title: "Erreur", description: e?.message, variant: "destructive" }); }

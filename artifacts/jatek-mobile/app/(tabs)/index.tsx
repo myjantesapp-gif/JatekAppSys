@@ -62,11 +62,6 @@ const CARD_BORDER = "#F0F0F0";
 // Shop categories (3×2 grid below the header)
 const CAT_TINT = "#F2EDD0"; // light yellow-olive — shared tile background
 
-// Default fallback image used when a restaurant has no imageUrl.
-// Picsum food-style placeholder (always reachable, no auth needed).
-const FALLBACK_FOOD =
-  "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80&auto=format&fit=crop";
-
 const { width: SCREEN_W } = Dimensions.get("window");
 const GRID_GAP = 12;
 const GRID_SIDE = 16;
@@ -155,10 +150,7 @@ function RestaurantTile({
   onPress: () => void;
   showDistance?: boolean;
 }) {
-  const img = restaurant.imageUrl || FALLBACK_FOOD;
-  const rating = restaurant.rating ?? 4.5;
-  const time = restaurant.deliveryTime ?? 25;
-  const fee = restaurant.deliveryFee ?? 0;
+  const img = restaurant.imageUrl;
 
   return (
     <Pressable
@@ -170,7 +162,13 @@ function RestaurantTile({
       ]}
     >
       <View style={s.tileImgWrap}>
-        <Image source={{ uri: img }} style={s.tileImg} resizeMode="cover" />
+        {img ? (
+          <Image source={{ uri: img }} style={s.tileImg} resizeMode="cover" />
+        ) : (
+          <View style={[s.tileImg, s.tileImgPlaceholder]}>
+            <Ionicons name="restaurant-outline" size={34} color={TEXT_MUTED} />
+          </View>
+        )}
         {badge === "nouveau" && (
           <View style={[s.tileBadge, { backgroundColor: NEW_GREEN }]}>
             <Text style={s.tileBadgeTxt}>Nouveau</Text>
@@ -194,24 +192,23 @@ function RestaurantTile({
           <Text style={s.tileName} numberOfLines={1}>
             {restaurant.name}
           </Text>
-          <View style={s.tileRatingInline}>
-            <Ionicons name="star" size={11} color={STAR} />
-            <Text style={s.tileRatingTxt}>{rating.toFixed(1)}</Text>
-          </View>
+          {restaurant.rating != null && (
+            <View style={s.tileRatingInline}>
+              <Ionicons name="star" size={11} color={STAR} />
+              <Text style={s.tileRatingTxt}>{restaurant.rating.toFixed(1)}</Text>
+            </View>
+          )}
         </View>
         <View style={s.tileMetaRow}>
-          <Ionicons name="time-outline" size={12} color={TEXT_MUTED} />
-          <Text style={s.tileMetaTxt}>
-            {time} - {time + 10} min
-          </Text>
-          <Ionicons
-            name="bicycle-outline"
-            size={12}
-            color={TEXT_MUTED}
-            style={{ marginLeft: 8 }}
-          />
-          <Text style={s.tileMetaTxt}>{fee} MAD</Text>
-          {showDistance && (
+          {restaurant.deliveryTime != null && (
+            <>
+              <Ionicons name="time-outline" size={12} color={TEXT_MUTED} />
+              <Text style={s.tileMetaTxt}>
+                {restaurant.deliveryTime} - {restaurant.deliveryTime + 10} min
+              </Text>
+            </>
+          )}
+          {restaurant.deliveryFee != null && (
             <>
               <Ionicons
                 name="location-outline"
@@ -219,7 +216,7 @@ function RestaurantTile({
                 color={TEXT_MUTED}
                 style={{ marginLeft: 8 }}
               />
-              <Text style={s.tileMetaTxt}>152m</Text>
+              <Text style={s.tileMetaTxt}>{restaurant.deliveryFee} MAD</Text>
             </>
           )}
         </View>
@@ -528,7 +525,7 @@ export default function HomeScreen() {
           {shorts.map((restaurant, i) => (
             <Pressable key={restaurant.id} onPress={() => openShort(i)} style={({ pressed }) => [s.videoCard, pressed && { opacity: 0.9 }]}>
               <Image
-                source={{ uri: restaurant.imageUrl || restaurant.coverImageUrl || FALLBACK_FOOD }}
+                source={{ uri: restaurant.imageUrl || restaurant.coverImageUrl || undefined }}
                 style={s.videoImg}
                 resizeMode="cover"
               />
@@ -1027,6 +1024,7 @@ const s = StyleSheet.create({
     backgroundColor: "#F3F4F6",
   },
   tileImg: { width: "100%", height: "100%" },
+  tileImgPlaceholder: { alignItems: "center", justifyContent: "center", backgroundColor: "#F3F4F6" },
   tileBadge: {
     position: "absolute",
     top: 8,

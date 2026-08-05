@@ -37,9 +37,6 @@ const TEXT_MUTED = "#6B7280";
 const CARD_BG = "#FFFFFF";
 const BG = "#FAFAFA";
 const STAR = "#FFB400";
-const FALLBACK_IMG =
-  "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80&auto=format&fit=crop";
-
 const { width: SCREEN_W } = Dimensions.get("window");
 
 // ─── Sub-category config per slug ─────────────────────────────────────────────
@@ -126,10 +123,7 @@ function PromoBannerCard({
 }
 
 function RestaurantCardGrid({ restaurant, onPress, color }: { restaurant: Restaurant; onPress: () => void; color: string }) {
-  const img = restaurant.imageUrl || FALLBACK_IMG;
-  const rating = restaurant.rating ?? 4.5;
-  const time = restaurant.deliveryTime ?? 25;
-  const fee = restaurant.deliveryFee ?? 0;
+  const img = restaurant.imageUrl;
 
   return (
     <Pressable
@@ -140,7 +134,13 @@ function RestaurantCardGrid({ restaurant, onPress, color }: { restaurant: Restau
       ]}
     >
       <View style={styles.gridImgWrap}>
-        <Image source={{ uri: img }} style={styles.gridCardImg} resizeMode="cover" />
+        {img ? (
+          <Image source={{ uri: img }} style={styles.gridCardImg} resizeMode="cover" />
+        ) : (
+          <View style={[styles.gridCardImg, styles.gridCardImgPlaceholder]}>
+            <Ionicons name="storefront-outline" size={32} color={TEXT_MUTED} />
+          </View>
+        )}
         {restaurant.isOpen === false && (
           <View style={styles.closedBadge}>
             <Text style={styles.closedText}>Fermé</Text>
@@ -157,13 +157,25 @@ function RestaurantCardGrid({ restaurant, onPress, color }: { restaurant: Restau
       <View style={styles.gridCardBody}>
         <Text style={styles.cardName} numberOfLines={1}>{restaurant.name}</Text>
         <View style={styles.cardMeta}>
-          <Ionicons name="star" size={12} color={STAR} />
-          <Text style={styles.metaTxtBold}>{rating.toFixed(1)}</Text>
-          <Text style={styles.metaDot}>·</Text>
-          <Ionicons name="time-outline" size={11} color={TEXT_MUTED} />
-          <Text style={styles.metaTxt}>{time} min</Text>
-          <Text style={styles.metaDot}>·</Text>
-          <Text style={styles.metaTxt}>{fee} MAD</Text>
+          {restaurant.rating != null && (
+            <>
+              <Ionicons name="star" size={12} color={STAR} />
+              <Text style={styles.metaTxtBold}>{restaurant.rating.toFixed(1)}</Text>
+            </>
+          )}
+          {restaurant.deliveryTime != null && (
+            <>
+              <Text style={styles.metaDot}>·</Text>
+              <Ionicons name="time-outline" size={11} color={TEXT_MUTED} />
+              <Text style={styles.metaTxt}>{restaurant.deliveryTime} min</Text>
+            </>
+          )}
+          {restaurant.deliveryFee != null && (
+            <>
+              <Text style={styles.metaDot}>·</Text>
+              <Text style={styles.metaTxt}>{restaurant.deliveryFee} MAD</Text>
+            </>
+          )}
         </View>
       </View>
     </Pressable>
@@ -586,6 +598,7 @@ const styles = StyleSheet.create({
   },
   gridImgWrap: { width: "100%", height: 110, position: "relative" },
   gridCardImg: { width: "100%", height: "100%" },
+  gridCardImgPlaceholder: { alignItems: "center", justifyContent: "center", backgroundColor: "#F3F4F6" },
   gridCardLogo: {
     position: "absolute",
     top: 6,

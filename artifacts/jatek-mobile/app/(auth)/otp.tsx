@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
@@ -9,7 +9,6 @@ import * as Haptics from "expo-haptics";
 import { useVerifyOtp, useSendOtp } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
-import { getApiBaseSafe } from "@/lib/apiBase";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useT } from "@/contexts/LanguageContext";
 
@@ -17,93 +16,52 @@ export default function OtpScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const t = useT();
-
-  // Support both `phone` (WhatsApp) and `email` identifiers
-  const { phone, email, demoOtp, channel } = useLocalSearchParams<{
-    phone: string;
-    email: string;
-    demoOtp: string;
-    channel: string;
-  }>();
-
-  const identifier = email || phone || "";
-  const isEmail = !!(email && email.includes("@")) || channel === "resend-email" || channel === "email";
-  const isWhatsApp = channel === "whatsapp" || channel === "twilio-whatsapp" || (!isEmail && !!phone);
-
+  const params = useLocalSearchParams<{ phone?: string; email?: string; demoOtp?: string; channel?: string; intent?: string }>();
+  const identifier = params.email || params.phone || "";
+  const isSignup = params.intent === "signup";
+  const isWhatsApp = !params.email || params.channel === "whatsapp" || params.channel === "twilio-whatsapp";
   const { login } = useAuth();
+
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [name, setName] = useState("");
-  const [showNameStep, setShowNameStep] = useState(false);
-  const [pendingToken, setPendingToken] = useState<string | null>(null);
-  const [pendingUser, setPendingUser] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [countdown, setCountdown] = useState(60);
   const refs = useRef<(TextInput | null)[]>([]);
   const verifyOtp = useVerifyOtp();
   const sendOtp = useSendOtp();
 
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-      return () => clearTimeout(timer);
-    }
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
   }, [countdown]);
 
-  // Auto-fill demo OTP
   useEffect(() => {
-    if (demoOtp && demoOtp.length === 6) {
-      const filled = demoOtp.split("").slice(0, 6);
-      setDigits(filled);
-      const t = setTimeout(() => handleVerify(demoOtp), 800);
-      return () => clearTimeout(t);
+    if (params.demoOtp && params.demoOtp.length === 6) {
+      setDigits(params.demoOtp.split("").slice(0, 6));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demoOtp]);
+  }, [params.demoOtp]);
 
   const code = digits.join("");
 
-  const handleDigit = (index: number, value: string) => {
-    const clean = value.replace(/\D/g, "");
-    if (clean.length > 1) {
-      const newDigits = [...digits];
-      for (let i = 0; i < 6 && index + i < 6; i++) newDigits[index + i] = clean[i] || "";
-      setDigits(newDigits);
-      const nextIdx = Math.min(index + clean.length, 5);
-      refs.current[nextIdx]?.focus();
-      if (newDigits.join("").length === 6) handleVerify(newDigits.join(""));
-      return;
-    }
-    const newDigits = [...digits];
-    newDigits[index] = clean;
-    setDigits(newDigits);
-    if (clean && index < 5) refs.current[index + 1]?.focus();
-    if (newDigits.join("").length === 6) handleVerify(newDigits.join(""));
-  };
-
-  const handleKeyDown = (index: number, key: string) => {
-    if (key === "Backspace" && !digits[index] && index > 0) {
-      refs.current[index - 1]?.focus();
-    }
-  };
-
   const handleVerify = (c = code) => {
     if (c.length < 6) return;
+    if (isSignup) {
+      if (name.trim().length < 2) { setError("Saisissez votre nom."); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Saisissez une adresse email valide."); return; }
+      if (password.length < 8) { setError("Le mot de passe doit comporter au moins 8 caractères."); return; }
+    }
     setError("");
-    // Pass email or phone depending on how OTP was sent
-    const payload = isEmail
-      ? { email: identifier, code: c }
-      : { phone: identifier, code: c };
-    verifyOtp.mutate({ data: payload as any }, {
-      onSuccess: async (res) => {
+    const payload: any = isSignup
+      ? { phone: identifier, code: c, intent: "signup", name: name.trim(), email: email.trim().toLowerCase(), password }
+      : params.email ? { email: identifier, code: c } : { phone: identifier, code: c };
+    verifyOtp.mutate({ data: payload }, {
+      onSuccess: async (res: any) => {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        if ((res as any).isNewUser) {
-          setPendingToken(res.token);
-          setPendingUser(res.user);
-          setShowNameStep(true);
-        } else {
-          await login(res.token, res.user as any);
-          router.replace("/(tabs)");
-        }
+        await login(res.token, res.user);
+        router.replace("/(tabs)");
       },
       onError: (err: any) => {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -112,142 +70,63 @@ export default function OtpScreen() {
     });
   };
 
-  const handleSaveName = async () => {
-    if (!pendingToken || !pendingUser) return;
-    setError("");
-    try {
-      const baseUrl = getApiBaseSafe();
-      const res = await fetch(`${baseUrl}/api/auth/update-name`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${pendingToken}` },
-        body: JSON.stringify({ name: name.trim() || pendingUser.name }),
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        setError((errJson as any)?.error || t("otp_invalid"));
-        return;
-      }
-      const json = await res.json();
-      await login(pendingToken, json.user ?? pendingUser);
-      router.replace("/(tabs)");
-    } catch {
-      setError(t("otp_invalid"));
+  const handleDigit = (index: number, value: string) => {
+    const clean = value.replace(/\D/g, "");
+    const next = [...digits];
+    if (clean.length > 1) {
+      clean.slice(0, 6 - index).split("").forEach((d, i) => { next[index + i] = d; });
+      refs.current[Math.min(index + clean.length, 5)]?.focus();
+    } else {
+      next[index] = clean;
+      if (clean && index < 5) refs.current[index + 1]?.focus();
     }
+    setDigits(next);
+    if (!isSignup && next.join("").length === 6) handleVerify(next.join(""));
   };
 
   const handleResend = () => {
-    const payload = isEmail ? { email: identifier } : { phone: identifier };
-    sendOtp.mutate({ data: payload as any }, {
-      onSuccess: () => {
+    if (!identifier) return;
+    sendOtp.mutate({ data: (params.email ? { email: identifier } : { phone: identifier }) as any }, {
+      onSuccess: (res: any) => {
         setCountdown(60);
-        setDigits(["", "", "", "", "", ""]);
+        setDigits(res?.demoOtp?.length === 6 ? res.demoOtp.split("") : ["", "", "", "", "", ""]);
         setError("");
       },
+      onError: (err: any) => setError(err?.data?.error || t("login_send_fail")),
     });
   };
 
-  // ── Badge config ──────────────────────────────────────────────────────────
-  const badgeBg    = isWhatsApp ? "#25D36618" : isEmail ? colors.primary + "15" : colors.primary + "15";
-  const badgeColor = isWhatsApp ? "#25D366"   : isEmail ? colors.primary        : colors.primary;
-  const badgeIcon: React.ComponentProps<typeof Ionicons>["name"] = isWhatsApp
-    ? "logo-whatsapp"
-    : isEmail
-    ? "mail-outline"
-    : "mail-outline";
-  const badgeLabel = isWhatsApp
-    ? t("otp_via_whatsapp")
-    : isEmail
-    ? t("otp_via_email")
-    : t("otp_via_whatsapp");
-
-  if (showNameStep) {
-    return (
-      <KeyboardAvoidingView
-        style={[styles.flex, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <View style={[styles.nameContainer, { paddingTop: insets.top + 40 }]}>
-          <View style={[styles.successIcon, { backgroundColor: (colors as any).success + "20" || "#22C55E20" }]}>
-            <Ionicons name="checkmark-circle" size={40} color={(colors as any).success || "#22C55E"} />
-          </View>
-          <Text style={[styles.title, { color: colors.foreground }]}>{t("otp_welcome")}</Text>
-          <Text style={[styles.sub, { color: colors.mutedForeground }]}>{t("otp_name_hint")}</Text>
-          <TextInput
-            style={[styles.nameInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-            placeholder={t("otp_name_placeholder")}
-            placeholderTextColor={colors.mutedForeground}
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={handleSaveName}
-          />
-          <TouchableOpacity
-            style={[styles.btn, { backgroundColor: colors.primary }]}
-            onPress={handleSaveName}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.btnText}>{t("otp_start")}</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    );
-  }
-
   return (
-    <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+    <KeyboardAvoidingView style={[styles.flex, { backgroundColor: colors.background }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.back} hitSlop={8}>
           <Ionicons name="arrow-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
-
-        {/* Channel badge */}
-        <View style={[styles.channelBadge, { backgroundColor: badgeBg }]}>
-          <Ionicons name={badgeIcon} size={16} color={badgeColor} />
-          <Text style={[styles.channelBadgeText, { color: badgeColor }]}>
-            {badgeLabel}
+        <View style={[styles.channelBadge, { backgroundColor: isWhatsApp ? "#25D36618" : colors.primary + "15" }]}>
+          <Ionicons name={isWhatsApp ? "logo-whatsapp" : "mail-outline"} size={16} color={isWhatsApp ? "#25D366" : colors.primary} />
+          <Text style={[styles.channelBadgeText, { color: isWhatsApp ? "#25D366" : colors.primary }]}>
+            {isSignup ? "Inscription vérifiée par WhatsApp" : t("otp_via_whatsapp")}
           </Text>
         </View>
-
         <Text style={[styles.title, { color: colors.foreground }]}>{t("otp_enter_code")}</Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-          {t("otp_sent_to")}{" "}
+        <Text style={[styles.sub, { color: colors.mutedForeground }]}>{t("otp_sent_to")}{" "}
           <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{identifier}</Text>
         </Text>
-
-        {demoOtp ? (
+        {params.demoOtp ? (
           <View style={[styles.demoBanner, { backgroundColor: colors.yellowSoft, borderColor: colors.yellow }]}>
             <Ionicons name="information-circle-outline" size={16} color={colors.yellowForeground} />
-            <Text style={[styles.demoText, { color: colors.yellowForeground }]}>
-              {t("otp_demo_code")}{" "}
-              <Text style={{ fontFamily: "Inter_700Bold" }}>{demoOtp}</Text>
-            </Text>
+            <Text style={[styles.demoText, { color: colors.yellowForeground }]}>{t("otp_demo_code")} <Text style={{ fontFamily: "Inter_700Bold" }}>{params.demoOtp}</Text></Text>
           </View>
         ) : null}
-
         <View style={styles.otpRow}>
           {digits.map((digit, i) => (
             <TextInput
               key={i}
               ref={(el) => { refs.current[i] = el; }}
-              style={[
-                styles.otpBox,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: digit ? colors.primary : colors.border,
-                  color: colors.foreground,
-                },
-              ]}
+              style={[styles.otpBox, { backgroundColor: colors.card, borderColor: digit ? colors.primary : colors.border, color: colors.foreground }]}
               value={digit}
               onChangeText={(v) => handleDigit(i, v)}
-              onKeyPress={({ nativeEvent }) => handleKeyDown(i, nativeEvent.key)}
+              onKeyPress={({ nativeEvent }) => nativeEvent.key === "Backspace" && !digits[i] && i > 0 && refs.current[i - 1]?.focus()}
               keyboardType="number-pad"
               maxLength={1}
               textAlign="center"
@@ -255,28 +134,21 @@ export default function OtpScreen() {
             />
           ))}
         </View>
-
-        {error ? <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text> : null}
-
-        {verifyOtp.isPending && (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator color={colors.primary} size="small" />
-            <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>{t("otp_verifying")}</Text>
+        {isSignup && (
+          <View style={styles.signupFields}>
+            <TextInput style={[styles.field, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="Votre nom" placeholderTextColor={colors.mutedForeground} value={name} onChangeText={setName} />
+            <TextInput style={[styles.field, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="Votre email" placeholderTextColor={colors.mutedForeground} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+            <TextInput style={[styles.field, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="Mot de passe (8 caractères minimum)" placeholderTextColor={colors.mutedForeground} value={password} onChangeText={setPassword} secureTextEntry />
+            <TouchableOpacity style={[styles.verifyBtn, { backgroundColor: colors.primary, opacity: verifyOtp.isPending ? 0.7 : 1 }]} onPress={() => handleVerify()} disabled={verifyOtp.isPending}>
+              {verifyOtp.isPending ? <ActivityIndicator color="#fff" /> : <><Text style={styles.btnText}>Vérifier et créer mon compte</Text><Ionicons name="arrow-forward" size={20} color="#fff" /></>}
+            </TouchableOpacity>
           </View>
         )}
-
+        {error ? <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text> : null}
+        {!isSignup && verifyOtp.isPending && <ActivityIndicator color={colors.primary} style={{ marginBottom: 14 }} />}
         <View style={styles.resendRow}>
-          {countdown > 0 ? (
-            <Text style={[styles.countdownText, { color: colors.mutedForeground }]}>
-              {t("otp_resend_in")}{" "}
-              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{countdown}s</Text>
-            </Text>
-          ) : (
-            <TouchableOpacity onPress={handleResend} disabled={sendOtp.isPending}>
-              <Text style={[styles.resendBtn, { color: colors.primary }]}>
-                {sendOtp.isPending ? t("otp_sending") : t("otp_resend")}
-              </Text>
-            </TouchableOpacity>
+          {countdown > 0 ? <Text style={[styles.countdownText, { color: colors.mutedForeground }]}>{t("otp_resend_in")} <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{countdown}s</Text></Text> : (
+            <TouchableOpacity onPress={handleResend} disabled={sendOtp.isPending}><Text style={[styles.resendBtn, { color: colors.primary }]}>{sendOtp.isPending ? t("otp_sending") : t("otp_resend")}</Text></TouchableOpacity>
           )}
         </View>
       </ScrollView>
@@ -287,41 +159,21 @@ export default function OtpScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flexGrow: 1, paddingHorizontal: 24, alignItems: "center" },
-  nameContainer: { flex: 1, paddingHorizontal: 24, alignItems: "center", gap: 16 },
   back: { alignSelf: "flex-start", padding: 4, marginBottom: 16 },
-  channelBadge: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, marginBottom: 20,
-  },
+  channelBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, marginBottom: 20 },
   channelBadgeText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   title: { fontSize: 26, fontFamily: "Inter_700Bold", textAlign: "center" },
-  sub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 8, marginBottom: 32 },
-  demoBanner: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1,
-    marginBottom: 24, width: "100%",
-  },
+  sub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 8, marginBottom: 24 },
+  demoBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, marginBottom: 20, width: "100%" },
   demoText: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  otpRow: { flexDirection: "row", gap: 8, marginBottom: 24, alignSelf: "stretch" },
-  otpBox: {
-    flex: 1, minWidth: 40, height: 56, borderRadius: 12, borderWidth: 2,
-    fontSize: 22, fontFamily: "Inter_700Bold",
-  },
-  errorText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 12 },
-  loadingRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
-  loadingText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  resendRow: { marginTop: 8 },
+  otpRow: { flexDirection: "row", gap: 8, marginBottom: 20, alignSelf: "stretch" },
+  otpBox: { flex: 1, minWidth: 40, height: 56, borderRadius: 12, borderWidth: 2, fontSize: 22, fontFamily: "Inter_700Bold" },
+  signupFields: { width: "100%", gap: 10 },
+  field: { width: "100%", height: 52, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular" },
+  verifyBtn: { width: "100%", height: 54, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 4 },
+  btnText: { color: "#fff", fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  errorText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 12 },
+  resendRow: { marginTop: 20 },
   countdownText: { fontSize: 14, fontFamily: "Inter_400Regular" },
   resendBtn: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  nameInput: {
-    width: "100%", height: 54, borderRadius: 14, borderWidth: 1.5,
-    paddingHorizontal: 16, fontSize: 16, fontFamily: "Inter_400Regular",
-  },
-  btn: {
-    width: "100%", height: 54, borderRadius: 14,
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    shadowColor: "#E2006A", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
-  },
-  btnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  successIcon: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center" },
 });

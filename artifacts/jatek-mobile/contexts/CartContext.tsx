@@ -39,6 +39,9 @@ interface CartContextType {
   deliveryFee: number;
   freeDeliveryThreshold: number;
   addItem: (restaurantId: number, restaurantName: string, item: Omit<CartItem, "quantity">, pricing?: RestaurantPricing) => void;
+  /** Like addItem but sets an exact quantity instead of always incrementing by 1.
+   *  Use this when the user picks qty > 1 in the detail modal. */
+  addItemWithQty: (restaurantId: number, restaurantName: string, item: Omit<CartItem, "quantity">, qty: number, pricing?: RestaurantPricing) => void;
   removeItem: (cartLineId: string) => void;
   updateQuantity: (cartLineId: string, quantity: number) => void;
   clearCart: () => void;
@@ -175,10 +178,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (typeof pricing.freeDeliveryThreshold === "number") setFreeDeliveryThreshold(pricing.freeDeliveryThreshold);
   }, []);
 
-  const addItem = useCallback((rId: number, rName: string, item: Omit<CartItem, "quantity">, pricing?: RestaurantPricing) => {
+  /** Shared logic for adding/updating an item — increments or sets exact qty. */
+  const _addOrSet = useCallback((rId: number, rName: string, item: Omit<CartItem, "quantity">, exactQty: number | null, pricing?: RestaurantPricing) => {
     setRestaurantId((prevId) => {
       if (prevId && prevId !== rId) {
-        // Switched restaurant — ask user before wiping the existing cart.
         Alert.alert(
           "Nouveau restaurant",
           "Votre panier contient des articles d'un autre restaurant. Vider le panier et continuer ?",
@@ -188,7 +191,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
               text: "Vider et continuer",
               style: "destructive",
               onPress: () => {
-                setItems([{ ...item, quantity: 1 }]);
+                setItems([{ ...item, quantity: exactQty ?? 1 }]);
                 setRestaurantName(rName);
                 applyPricing(pricing);
                 setRestaurantId(rId);
@@ -196,18 +199,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
             },
           ],
         );
-        return prevId; // keep current until user confirms
+        return prevId;
       }
       setRestaurantName(rName);
       applyPricing(pricing);
       setItems((prev) => {
         const ex = prev.find((i) => i.cartLineId === item.cartLineId);
-        if (ex) return prev.map((i) => i.cartLineId === item.cartLineId ? { ...i, quantity: i.quantity + 1 } : i);
-        return [...prev, { ...item, quantity: 1 }];
+        if (exactQty !== null) {
+          // addItemWithQty: set to exact value (replace or add new)
+          if (ex) return prev.map((i) => i.cartLineId === item.cartLineId ? { ...i, quantity: exactQty } : i);
+          return [...prev, { ...item, quantity: exactQty }];
+        } else {
+          // addItem: increment by 1 (or add with qty 1)
+          if (ex) return prev.map((i) => i.cartLineId === item.cartLineId ? { ...i, quantity: i.quantity + 1 } : i);
+          return [...prev, { ...item, quantity: 1 }];
+        }
       });
       return rId;
     });
   }, [applyPricing]);
+
+  const addItem = useCallback((rId: number, rName: string, item: Omit<CartItem, "quantity">, pricing?: RestaurantPricing) => {
+    _addOrSet(rId, rName, item, null, pricing);
+  }, [_addOrSet]);
+
+  const addItemWithQty = useCallback((rId: number, rName: string, item: Omit<CartItem, "quantity">, qty: number, pricing?: RestaurantPricing) => {
+    _addOrSet(rId, rName, item, Math.max(1, qty), pricing);
+  }, [_addOrSet]);
 
   const removeItem = useCallback((cartLineId: string) => {
     setItems((prev) => {
@@ -267,6 +285,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     deliveryFee,
     freeDeliveryThreshold,
     addItem,
+    addItemWithQty,
     removeItem,
     updateQuantity,
     clearCart,
@@ -284,7 +303,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setNotes,
   }), [
     items, restaurantId, restaurantName, deliveryFee, freeDeliveryThreshold,
-    addItem, removeItem, updateQuantity, clearCart,
+    addItem, addItemWithQty, removeItem, updateQuantity, clearCart,
     subtotal, itemCount,
     selectedAddress, selectedAddressInZone, setSelectedAddress,
     appliedCoupon, discount.itemsDiscount, discount.freeDelivery,

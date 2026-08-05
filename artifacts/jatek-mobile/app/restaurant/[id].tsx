@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   StyleSheet, Text, View, FlatList, TouchableOpacity,
   Image, ActivityIndicator, Platform, ScrollView, Animated, Pressable, Dimensions, Modal, Linking,
+  Share, TextInput,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import * as Haptics from "expo-haptics";
@@ -52,7 +53,9 @@ export default function RestaurantScreen() {
   const [activeCategory, setActiveCategory] = useState("Tous");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-  const { items: cartItems, addItem, updateQuantity, restaurantId: cartRestaurantId, itemCount } = useCart();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { items: cartItems, addItem, addItemWithQty, updateQuantity, restaurantId: cartRestaurantId, itemCount } = useCart();
   const { token } = useAuth();
   const [isFav, setIsFav] = useState(false);
   const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -87,13 +90,19 @@ export default function RestaurantScreen() {
     [menuItems]
   );
   const filtered = useMemo(
-    () => activeCategory === "Tous"
-      ? (menuItems ?? [])
-      : (menuItems ?? []).filter((m: any) => m.category === activeCategory),
-    [menuItems, activeCategory]
+    () => (menuItems ?? []).filter((m: any) => {
+      const matchesCategory = activeCategory === "Tous" || m.category === activeCategory;
+      const q = searchQuery.trim().toLowerCase();
+      return matchesCategory && (!q || `${m.name ?? ""} ${m.description ?? ""}`.toLowerCase().includes(q));
+    }),
+    [menuItems, activeCategory, searchQuery]
   );
 
-  const getQty = (itemId: number) => cartItems.find((i) => i.menuItemId === itemId)?.quantity ?? 0;
+  // The grid line has no size/extra selection. Do not sum variant lines here:
+  // that makes a card appear to represent a different quantity than the
+  // actual cart lines.
+  const getQty = (itemId: number) =>
+    cartItems.find((i) => i.cartLineId === String(itemId))?.quantity ?? 0;
   const businessType = (restaurant as any)?.businessType ?? "restaurant";
   const isServices = businessType === "services";
 
@@ -136,10 +145,28 @@ export default function RestaurantScreen() {
             <TouchableOpacity onPress={toggleFav} style={styles.roundBtn} activeOpacity={0.85}>
               <Ionicons name={isFav ? "heart" : "heart-outline"} size={20} color={isFav ? colors.primary : colors.foreground} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.roundBtn} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={styles.roundBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                const url = `https://ma.jatek.app/restaurant/${restaurantId}`;
+                Share.share({ title: restaurant.name, message: `${restaurant.name} — ${url}`, url }).catch(() => {});
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Partager le restaurant"
+            >
               <Ionicons name="share-outline" size={20} color={colors.foreground} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.roundBtn} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={styles.roundBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                setSearchOpen((open) => !open);
+                if (searchOpen) setSearchQuery("");
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Rechercher dans le menu"
+            >
               <Ionicons name="search" size={20} color={colors.foreground} />
             </TouchableOpacity>
           </View>
@@ -231,6 +258,26 @@ export default function RestaurantScreen() {
               </Text>
             </View>
           </View>
+        </View>
+      )}
+
+      {searchOpen && (
+        <View style={[styles.menuSearchWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Ionicons name="search" size={17} color={colors.mutedForeground} />
+          <TextInput
+            autoFocus
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Rechercher un plat…"
+            placeholderTextColor={colors.mutedForeground}
+            style={[styles.menuSearchInput, { color: colors.foreground }]}
+            returnKeyType="search"
+          />
+          {!!searchQuery && (
+            <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={8}>
+              <Ionicons name="close-circle" size={17} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -362,7 +409,7 @@ export default function RestaurantScreen() {
         <Pressable style={styles.infoModalBackdrop} onPress={() => setInfoModalOpen(false)}>
           <Pressable
             style={[styles.infoModalSheet, { paddingBottom: insets.bottom + 24, backgroundColor: colors.background }]}
-            onPress={() => {}}
+            onPress={(event) => event.stopPropagation?.()}
           >
             {/* Handle bar */}
             <View style={[styles.infoModalHandle, { backgroundColor: colors.border }]} />
@@ -503,20 +550,21 @@ export default function RestaurantScreen() {
         onAdd={({ qty, selectedSize, selectedSizeId, selectedExtras, selectedExtraIds, unitPrice, displayName, cartLineId }) => {
           if (!selectedItem || !isOpen) return;
           const pricing = restaurant as { deliveryFee?: number | null; freeDeliveryThreshold?: number | null };
-          for (let i = 0; i < qty; i++) {
-            addItem(restaurantId, restaurant.name, {
-              cartLineId,
-              menuItemId: selectedItem.id,
-              name: displayName,
-              price: unitPrice,
-              imageUrl: selectedItem.imageUrl,
-              selectedSize: selectedSize?.name,
-              selectedSizeId: selectedSizeId ?? undefined,
-              selectedSizePriceAdjustment: selectedSize?.priceAdjustment,
-              selectedExtras: selectedExtras.map((e) => e.name),
-              selectedExtraIds: selectedExtraIds.length ? selectedExtraIds : undefined,
-            }, { deliveryFee: pricing.deliveryFee, freeDeliveryThreshold: pricing.freeDeliveryThreshold });
-          }
+          // Use addItemWithQty so the cart directly reflects the qty chosen in
+          // the modal rather than calling addItem N times (which mishandles
+          // items already in the cart and fires N redundant state updates).
+          addItemWithQty(restaurantId, restaurant.name, {
+            cartLineId,
+            menuItemId: selectedItem.id,
+            name: displayName,
+            price: unitPrice,
+            imageUrl: selectedItem.imageUrl,
+            selectedSize: selectedSize?.name,
+            selectedSizeId: selectedSizeId ?? undefined,
+            selectedSizePriceAdjustment: selectedSize?.priceAdjustment,
+            selectedExtras: selectedExtras.map((e) => e.name),
+            selectedExtraIds: selectedExtraIds.length ? selectedExtraIds : undefined,
+          }, qty, { deliveryFee: pricing.deliveryFee, freeDeliveryThreshold: pricing.freeDeliveryThreshold });
         }}
       />
     </View>
@@ -576,6 +624,23 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.95)",
     alignItems: "center", justifyContent: "center",
     shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 3,
+  },
+  menuSearchWrap: {
+    marginHorizontal: SIDE,
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 46,
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  menuSearchInput: {
+    flex: 1,
+    minHeight: 44,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
   },
 
   // Overlapping info card

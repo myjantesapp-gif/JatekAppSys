@@ -48,7 +48,11 @@ export default function ForgotPasswordScreen() {
       const res = await fetch(`${base}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: code.trim(), newPassword }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code: code.trim(),
+          newPassword,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Code invalide ou expiré");

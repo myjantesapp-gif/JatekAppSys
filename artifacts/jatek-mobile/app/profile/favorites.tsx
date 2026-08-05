@@ -14,8 +14,9 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import ProfileScreenLayout from "@/components/ProfileScreenLayout";
 import { useColors } from "@/hooks/useColors";
-import { useListRestaurants, type Restaurant } from "@workspace/api-client-react";
-import { getFavoriteIds, removeFavorite } from "@/lib/favorites";
+import type { Restaurant } from "@workspace/api-client-react";
+import { listFavorites, removeFavorite } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STAR_YELLOW = "#FFC107";
 const TURQUOISE = "#22D3EE";
@@ -116,34 +117,58 @@ function FavoriteCard({
 
 export default function FavoritesScreen() {
   const colors = useColors();
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+  const { token } = useAuth();
+  const [favoriteRestaurants, setFavoriteRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: allRestaurants, isLoading: restaurantsLoading } = useListRestaurants({ businessType: "restaurant" });
-
   const load = useCallback(async () => {
-    const ids = await getFavoriteIds();
-    setFavoriteIds(ids);
-    setLoading(false);
-    setRefreshing(false);
-  }, []);
+    if (!token) {
+      setFavoriteRestaurants([]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+    try {
+      const rows = await listFavorites();
+      setFavoriteRestaurants(
+        rows.map((row) => row.restaurant as Restaurant | null).filter(Boolean) as Restaurant[],
+      );
+    } catch {
+      setFavoriteRestaurants([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [token]);
 
   useEffect(() => { load(); }, [load]);
 
   const onRefresh = () => { setRefreshing(true); load(); };
 
   const onRemove = async (restaurantId: number) => {
-    setFavoriteIds((prev) => prev.filter((id) => id !== restaurantId));
-    await removeFavorite(restaurantId);
+    const previous = favoriteRestaurants;
+    setFavoriteRestaurants((prev) => prev.filter((restaurant) => restaurant.id !== restaurantId));
+    try {
+      await removeFavorite(restaurantId);
+    } catch {
+      setFavoriteRestaurants(previous);
+    }
   };
 
-  const favoriteRestaurants = allRestaurants?.filter((r) => favoriteIds.includes(r.id)) ?? [];
-  const isReady = !loading && !restaurantsLoading;
+  const isReady = !loading;
 
   return (
     <ProfileScreenLayout title="Mes favoris" scroll={false}>
-      {!isReady ? (
+      {!token ? (
+        <View style={styles.center}>
+          <Ionicons name="lock-closed-outline" size={56} color={colors.mutedForeground} />
+          <Text style={[styles.emptyTitle, { color: colors.heading }]}>Connectez-vous pour voir vos favoris</Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/login")} style={[styles.cta, { backgroundColor: colors.primary }]}>
+            <Text style={styles.ctaText}>Se connecter</Text>
+          </TouchableOpacity>
+        </View>
+      ) : !isReady ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.primary} />
         </View>

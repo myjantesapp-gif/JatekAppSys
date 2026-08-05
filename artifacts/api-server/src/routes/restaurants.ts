@@ -146,7 +146,7 @@ router.get("/restaurants/:id", async (req, res): Promise<void> => {
 
 router.patch("/restaurants/:id", requireRole("admin", "restaurant_owner"), async (req: AuthedRequest, res): Promise<void> => {
   // Ownership check: non-admin owners may only modify their own restaurant.
-  if (req.userRole !== "admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
     const idParam = parseInt(String(req.params.id ?? ""), 10);
     if (Number.isNaN(idParam)) {
       res.status(400).json({ error: "Invalid id" });
@@ -176,7 +176,7 @@ router.patch("/restaurants/:id", requireRole("admin", "restaurant_owner"), async
 
   const updatePayload: any = { ...parsed.data };
   // Only admins may reassign ownership; strip ownerId for non-admins.
-  if (req.userRole !== "admin" && req.userRole !== "super_admin") delete updatePayload.ownerId;
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && req.userRole !== "super_admin") delete updatePayload.ownerId;
   // Coerce empty string phone to null for schema consistency.
   if (updatePayload.phone === "") updatePayload.phone = null;
 
@@ -205,7 +205,7 @@ router.post("/restaurants/:id/complete-profile", requireRole("admin", "restauran
 
   const [existing] = await db.select().from(restaurantsTable).where(eq(restaurantsTable.id, id)).limit(1);
   if (!existing) { res.status(404).json({ error: "Restaurant not found" }); return; }
-  if (req.userRole !== "admin" && existing.ownerId !== req.userId) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && existing.ownerId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

@@ -183,7 +183,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
 // ─── Verify OTP ───────────────────────────────────────────────────────────────
 router.post("/auth/verify-otp", async (req, res): Promise<void> => {
-  const { phone, email, code, name, role } = req.body;
+  const { phone, email, code, name, password, intent, role } = req.body;
 
   if ((!phone && !email) || !code) {
     res.status(400).json({ error: "Numéro de téléphone (ou email) et code requis" });
@@ -234,6 +234,62 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         ? `Code incorrect. ${remaining} tentative${remaining === 1 ? "" : "s"} restante${remaining === 1 ? "" : "s"}.`
         : "Trop de tentatives. Demandez un nouveau code.",
     });
+    return;
+  }
+
+  const isSignup = intent === "signup";
+  // WhatsApp OTP is intentionally only the first step of account creation.
+  // Existing customers authenticate with email/password; never create a
+  // passwordless "phone_xxx@jatek.local" account as a side effect of login.
+  if (!isSignup && !isEmailMode && role !== "driver") {
+    res.status(400).json({ error: "Le code WhatsApp est réservé à l'inscription" });
+    return;
+  }
+
+  if (isSignup) {
+    if (!phone || !name || typeof name !== "string" || name.trim().length < 2) {
+      res.status(400).json({ error: "Nom requis pour créer le compte" });
+      return;
+    }
+    if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      res.status(400).json({ error: "Adresse email valide requise" });
+      return;
+    }
+    if (!password || typeof password !== "string" || password.length < 8) {
+      res.status(400).json({ error: "Le mot de passe doit comporter au moins 8 caractères" });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = normalizePhone(String(phone).trim());
+    const [emailUser, phoneUser] = await Promise.all([
+      db.select().from(usersTable).where(eq(usersTable.email, normalizedEmail)).limit(1),
+      db.select().from(usersTable).where(eq(usersTable.phone, normalizedPhone)).limit(1),
+    ]);
+    if (emailUser.length > 0) {
+      res.status(409).json({ error: "Cette adresse email est déjà utilisée" });
+      return;
+    }
+    if (phoneUser.length > 0) {
+      res.status(409).json({ error: "Ce numéro WhatsApp possède déjà un compte" });
+      return;
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const [newUser] = await db.insert(usersTable).values({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: hashed,
+      role: "customer",
+      phone: normalizedPhone,
+      loyaltyPoints: 0,
+      isActive: true,
+    }).returning();
+
+    await db.update(otpCodesTable).set({ used: true }).where(eq(otpCodesTable.id, otpRecord.id));
+    const token = jwt.sign({ userId: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: "30d" });
+    const { password: _pw, ...safeUser } = newUser;
+    res.status(201).json({ token, user: safeUser, isNewUser: true });
     return;
   }
 

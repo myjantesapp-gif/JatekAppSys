@@ -22,12 +22,7 @@ import { Switch } from "@/components/ui/switch";
 type OrderWithItems = Order & { items: Array<{ id: number; quantity: number; menuItemName: string; totalPrice: number; selectedSize?: string; selectedExtras?: string }> };
 
 async function fetchOrderDetail(id: number): Promise<OrderWithItems> {
-  const token = localStorage.getItem("jatek_backend_token");
-  const res = await fetch(`/api/backend/orders/${id}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  return apiFetch(`/api/backend/orders/${id}`) as Promise<OrderWithItems>;
 }
 
 const STATUS_COLORS: Record<string, string> = {

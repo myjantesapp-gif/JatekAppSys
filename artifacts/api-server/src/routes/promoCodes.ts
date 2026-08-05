@@ -95,7 +95,7 @@ router.post("/promo-codes/validate", requireAuth, async (req: AuthedRequest, res
 
 /** List all active promo codes (admin only) */
 router.get("/promo-codes", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && req.userRole !== "super_admin") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -105,7 +105,7 @@ router.get("/promo-codes", requireAuth, async (req: AuthedRequest, res): Promise
 
 /** Create a promo code (admin only) */
 router.post("/promo-codes", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && req.userRole !== "super_admin") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -132,7 +132,7 @@ router.post("/promo-codes", requireAuth, async (req: AuthedRequest, res): Promis
 
 /** Update a promo code (admin only) */
 router.patch("/promo-codes/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && req.userRole !== "super_admin") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -148,7 +148,7 @@ router.patch("/promo-codes/:id", requireAuth, async (req: AuthedRequest, res): P
 
 /** Delete a promo code (admin only) */
 router.delete("/promo-codes/:id", requireAuth, async (req: AuthedRequest, res): Promise<void> => {
-  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && req.userRole !== "super_admin") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

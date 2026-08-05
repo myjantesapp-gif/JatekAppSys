@@ -710,14 +710,14 @@ router.post("/orders/:id/accept-delivery", requireAuth, async (req: AuthedReques
   if (!driver) { res.status(404).json({ error: "Driver not found" }); return; }
 
   // Caller must be the driver themselves, or an admin
-  if (driver.userId !== req.userId && req.userRole !== "admin") {
+  if (driver.userId !== req.userId && req.userRole !== "admin" && req.userRole !== "super_admin") {
     res.status(403).json({ error: "Not authorized to accept on behalf of another driver" });
     return;
   }
 
   // Profile gate — driver must have completed the mandatory onboarding fields
   // before they can accept any delivery (vehicle plate + national ID).
-  if (req.userRole !== "admin" && !driver.profileCompletedAt) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && !driver.profileCompletedAt) {
     res.status(412).json({
       error: "Complete your driver profile (vehicle, plate, national ID) before accepting deliveries.",
       code: "DRIVER_PROFILE_INCOMPLETE",
@@ -798,7 +798,7 @@ router.post("/orders/:id/confirm-delivery", requireAuth, async (req: AuthedReque
   }
 
   // Authorization
-  if (req.userRole !== "admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
     if (!existing.driverId) {
       res.status(403).json({ error: "Order has no assigned driver" });
       return;
@@ -909,7 +909,7 @@ router.get("/orders/:id/receipt", requireAuth, async (req: AuthedRequest, res, n
   const [restaurant] = await db.select().from(restaurantsTable).where(eq(restaurantsTable.id, order.restaurantId)).limit(1);
   if (!restaurant) { res.status(404).send("Restaurant not found"); return; }
 
-  if (req.userRole !== "admin" && restaurant.ownerId !== req.userId) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && restaurant.ownerId !== req.userId) {
     res.status(403).send("Forbidden");
     return;
   }

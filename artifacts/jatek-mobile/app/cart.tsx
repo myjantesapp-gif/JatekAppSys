@@ -34,7 +34,10 @@ export default function CartScreen() {
   const insets = useSafeAreaInsets();
   const t = useT();
   const { items, restaurantId, restaurantName, updateQuantity, clearCart, subtotal, itemCount, selectedAddress, selectedAddressInZone, deliveryFee, freeDeliveryThreshold, appliedCoupon, itemsDiscount, freeDeliveryCoupon, removeCoupon, notes, setNotes } = useCart();
-  const baseDeliveryFee = subtotal >= freeDeliveryThreshold ? 0 : deliveryFee;
+  // Only waive the delivery fee when a threshold is actually configured (> 0)
+  // and the subtotal has reached it. When freeDeliveryThreshold is 0 (no
+  // threshold set yet / empty cart initial state) the fee is always applied.
+  const baseDeliveryFee = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold ? 0 : deliveryFee;
   const effectiveDeliveryFee = freeDeliveryCoupon ? 0 : baseDeliveryFee;
   const discountedSubtotal = Math.max(0, subtotal - itemsDiscount);
   const orderTotal = discountedSubtotal + effectiveDeliveryFee;
@@ -353,7 +356,7 @@ export default function CartScreen() {
         </View>
 
         {/* Free-delivery threshold */}
-        {(() => {
+        {freeDeliveryThreshold > 0 && (() => {
           const remaining = freeDeliveryThreshold - subtotal;
           const reached = remaining <= 0;
           const progress = Math.min(1, subtotal / freeDeliveryThreshold);

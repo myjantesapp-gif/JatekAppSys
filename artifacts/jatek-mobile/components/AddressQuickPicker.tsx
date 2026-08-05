@@ -67,7 +67,7 @@ export function AddressQuickPicker({ visible, onClose }: Props) {
     <>
       <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
         <TouchableOpacity activeOpacity={1} onPress={onClose} style={sheetStyles.overlay}>
-          <TouchableOpacity activeOpacity={1} onPress={() => {}} style={[sheetStyles.sheet, { backgroundColor: colors.background }]}>
+          <TouchableOpacity activeOpacity={1} onPress={(event) => event.stopPropagation?.()} style={[sheetStyles.sheet, { backgroundColor: colors.background }]}>
             <View style={sheetStyles.handle} />
             <Text style={[sheetStyles.title, { color: colors.heading }]}>{t("addr_sheet_title")}</Text>
 

@@ -131,7 +131,7 @@ router.patch("/drivers/:id", requireAuth, async (req: AuthedRequest, res): Promi
 
   const [existing] = await db.select().from(driversTable).where(eq(driversTable.id, params.data.id)).limit(1);
   if (!existing) { res.status(404).json({ error: "Driver not found" }); return; }
-  if (req.userRole !== "admin" && existing.userId !== req.userId) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && existing.userId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -155,7 +155,7 @@ router.post("/drivers/:id/complete-profile", requireAuth, async (req: any, res):
 
   const [existing] = await db.select().from(driversTable).where(eq(driversTable.id, id)).limit(1);
   if (!existing) { res.status(404).json({ error: "Driver not found" }); return; }
-  if (req.userRole !== "admin" && existing.userId !== req.userId) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && existing.userId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -199,7 +199,7 @@ router.patch("/drivers/:id/location", requireAuth, async (req: AuthedRequest, re
 
   const [existingDriver] = await db.select().from(driversTable).where(eq(driversTable.id, id)).limit(1);
   if (!existingDriver) { res.status(404).json({ error: "Driver not found" }); return; }
-  if (req.userRole !== "admin" && existingDriver.userId !== req.userId) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && existingDriver.userId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -278,7 +278,7 @@ router.post("/drivers/:id/heartbeat", requireAuth, async (req: AuthedRequest, re
 
   const [driver] = await db.select().from(driversTable).where(eq(driversTable.id, id)).limit(1);
   if (!driver) { res.status(404).json({ error: "Driver not found" }); return; }
-  if (req.userRole !== "admin" && driver.userId !== req.userId) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && driver.userId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -351,7 +351,7 @@ router.get("/drivers/:id/earnings", requireAuth, async (req: AuthedRequest, res)
     res.status(404).json({ error: "Driver not found" });
     return;
   }
-  if (req.userRole !== "admin" && driver.userId !== req.userId) {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin" && driver.userId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

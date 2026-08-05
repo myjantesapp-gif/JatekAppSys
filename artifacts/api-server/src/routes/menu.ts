@@ -68,7 +68,7 @@ router.post("/restaurants/:restaurantId/menu", requireRole("admin", "restaurant_
     return;
   }
 
-  if (req.userRole !== "admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
     const ownerId = await getRestaurantOwnerId(pathParams.data.restaurantId);
     if (ownerId == null) {
       res.status(404).json({ error: "Restaurant not found" });
@@ -119,7 +119,7 @@ router.patch("/menu/:id", requireRole("admin", "restaurant_owner"), async (req: 
     return;
   }
 
-  if (req.userRole !== "admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
     const ownerId = await getMenuItemOwnerId(params.data.id);
     if (ownerId == null) {
       res.status(404).json({ error: "Menu item not found" });
@@ -152,7 +152,7 @@ router.delete("/menu/:id", requireRole("admin", "restaurant_owner"), async (req:
     return;
   }
 
-  if (req.userRole !== "admin") {
+  if (req.userRole !== "admin" && req.userRole !== "super_admin") {
     const ownerId = await getMenuItemOwnerId(params.data.id);
     if (ownerId == null) {
       res.status(404).json({ error: "Menu item not found" });
