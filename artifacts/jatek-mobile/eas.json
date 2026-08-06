@@ -13,11 +13,11 @@
         "paths": ["~/.gradle/caches", "~/.gradle/wrapper"]
       },
       "env": {
-        "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
+        "EXPO_PUBLIC_PROJECT_ID": "d30cddea-9dd6-42aa-8339-80d86b9ad76e",
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "straightpath",
-        "EXPO_SLUG": "jatekmobile",
+        "EXPO_OWNER": "jatekplatforms-team",
+        "EXPO_SLUG": "jatekclient",
         "npm_config_frozen_lockfile": "false",
         "pnpm_config_frozen_lockfile": "false",
         "NODE_VERSION": "20"
@@ -37,10 +37,10 @@
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
+        "EXPO_PUBLIC_PROJECT_ID": "d30cddea-9dd6-42aa-8339-80d86b9ad76e",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "straightpath",
-        "EXPO_SLUG": "jatekmobile",
+        "EXPO_OWNER": "jatekplatforms-team",
+        "EXPO_SLUG": "jatekclient",
         "npm_config_frozen_lockfile": "false",
         "pnpm_config_frozen_lockfile": "false",
         "NODE_VERSION": "20"
@@ -60,10 +60,10 @@
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
-        "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
+        "EXPO_PUBLIC_PROJECT_ID": "d30cddea-9dd6-42aa-8339-80d86b9ad76e",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_OWNER": "straightpath",
-        "EXPO_SLUG": "jatekmobile",
+        "EXPO_OWNER": "jatekplatforms-team",
+        "EXPO_SLUG": "jatekclient",
         "npm_config_frozen_lockfile": "false",
         "pnpm_config_frozen_lockfile": "false",
         "NODE_VERSION": "20"

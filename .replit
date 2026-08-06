@@ -200,6 +200,9 @@ TWILIO_FROM_NUMBER = "+15072600620"
 INFOBIP_BASE_URL = "w4kgd8.api.infobip.com"
 VAPID_PRIVATE_KEY = "CepGJ21FnGHCxtMSTn9uujjKuGVRWT7guRY2-iDTBlQ"
 TWILIO_VERIFY_SID = "VA25429557cff09e1d0c2ad3a914245b3a"
+EXPO_PUBLIC_OWNER = "jatekplatforms-team"
+EXPO_PUBLIC_PROJECT_ID = "d30cddea-9dd6-42aa-8339-80d86b9ad76e"
+EXPO_PUBLIC_SLUG = "jatekclient"
 
   [userenv.development]
   EXPO_PUBLIC_DOMAIN = "ma.jatek.app"
