@@ -199,6 +199,7 @@ VAPID_SUBJECT = "mailto:admin@jatek.ma"
 TWILIO_FROM_NUMBER = "+15072600620"
 INFOBIP_BASE_URL = "w4kgd8.api.infobip.com"
 VAPID_PRIVATE_KEY = "CepGJ21FnGHCxtMSTn9uujjKuGVRWT7guRY2-iDTBlQ"
+TWILIO_VERIFY_SID = "VA25429557cff09e1d0c2ad3a914245b3a"
 
   [userenv.development]
   EXPO_PUBLIC_DOMAIN = "ma.jatek.app"

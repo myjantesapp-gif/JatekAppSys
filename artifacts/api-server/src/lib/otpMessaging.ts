@@ -1,14 +1,15 @@
 // OTP messaging with multi-provider fallback chain.
 //
-// Phone OTP order (WhatsApp only):
-//   1. Twilio WhatsApp   (primary — env: TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN)
-//   2. Infobip WhatsApp  (fallback — env: INFOBIP_API_KEY + INFOBIP_BASE_URL + INFOBIP_WA_SENDER)
+// Phone OTP (preferred): Twilio Verify Service
+//   - env: TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_VERIFY_SID
+//   - Sends WhatsApp OTP via Twilio Verify; Twilio manages code/expiry/rate-limit
+//   - No DB entry needed for phone OTP when Verify is configured
+//
+// Phone OTP (legacy fallback — no Verify SID):
+//   1. Twilio WhatsApp direct  (TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_WA_FROM)
+//   2. Infobip WhatsApp        (INFOBIP_API_KEY + INFOBIP_BASE_URL + INFOBIP_WA_SENDER)
 //
 // Email: Resend (RESEND_API_KEY + RESEND_FROM_EMAIL)
-//
-// Each provider is skipped silently when not configured. The first successful
-// send wins; failures are logged and the chain continues. If every provider
-// fails, throws an aggregated error.
 //
 // Twilio calls use the REST API directly (fetch) — no SDK dependency.
 
@@ -110,6 +111,62 @@ async function sendTwilioWhatsapp(to: string, body: string): Promise<void> {
 
   await twilioPost("Messages.json", { To: toWa, From: from, Body: body });
 }
+
+// ─── Twilio Verify Service ────────────────────────────────────────────────────
+// Preferred phone OTP path. Twilio manages code generation, storage, expiry,
+// rate-limiting and multi-channel delivery. No DB row needed.
+function twilioVerifyConfigured(): boolean {
+  return !!(
+    process.env.TWILIO_VERIFY_SID?.startsWith("VA") &&
+    process.env.TWILIO_ACCOUNT_SID?.startsWith("AC") &&
+    process.env.TWILIO_AUTH_TOKEN
+  );
+}
+
+export async function sendTwilioVerify(to: string, channel: "whatsapp" | "sms" = "whatsapp"): Promise<void> {
+  const sid = process.env.TWILIO_VERIFY_SID!;
+  const url = `https://verify.twilio.com/v2/Services/${sid}/Verifications`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: twilioAuthHeader(),
+    },
+    body: new URLSearchParams({ To: to, Channel: channel }).toString(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as any;
+    throw new Error(
+      `Twilio Verify send ${res.status}: ${data?.message ?? res.statusText}` +
+      (data?.code ? ` (code ${data.code})` : "")
+    );
+  }
+}
+
+export async function checkTwilioVerify(to: string, code: string): Promise<"approved" | "pending" | "expired"> {
+  const sid = process.env.TWILIO_VERIFY_SID!;
+  const url = `https://verify.twilio.com/v2/Services/${sid}/VerificationChecks`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: twilioAuthHeader(),
+    },
+    body: new URLSearchParams({ To: to, Code: code }).toString(),
+  });
+  const data = await res.json().catch(() => ({})) as any;
+  if (!res.ok) {
+    // 404 means the verification was not found / already used / expired
+    if (res.status === 404) return "expired";
+    throw new Error(
+      `Twilio Verify check ${res.status}: ${data?.message ?? res.statusText}` +
+      (data?.code ? ` (code ${data.code})` : "")
+    );
+  }
+  return data?.status === "approved" ? "approved" : "pending";
+}
+
+export { twilioVerifyConfigured };
 
 // ─── Resend (email OTP) ───────────────────────────────────────────────────────
 // RESEND_EMAIL_FROM is accepted as an alias for RESEND_FROM_EMAIL.

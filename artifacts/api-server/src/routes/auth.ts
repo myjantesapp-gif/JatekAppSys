@@ -4,7 +4,10 @@ import jwt from "jsonwebtoken";
 import { db, usersTable, driversTable, otpCodesTable } from "@workspace/db";
 import { eq, and, gt, desc } from "drizzle-orm";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
-import { sendOtpMessage, sendOtpEmail, anyOtpProviderConfigured } from "../lib/otpMessaging.js";
+import {
+  sendOtpMessage, sendOtpEmail, anyOtpProviderConfigured,
+  sendTwilioVerify, checkTwilioVerify, twilioVerifyConfigured,
+} from "../lib/otpMessaging.js";
 
 const router: IRouter = Router();
 
@@ -100,12 +103,11 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 });
 
 // ─── Send OTP (email or WhatsApp) ──────────────────────────────────────────────
-// Email uses the email provider; phone uses WhatsApp providers only. The
-// `channel` request field is accepted for backwards compatibility.
+// Phone OTP: Twilio Verify Service (preferred) → legacy WhatsApp providers.
+// Email OTP: Resend (DB-managed, unchanged).
 router.post("/auth/send-otp", async (req, res): Promise<void> => {
   const { phone, email } = req.body;
 
-  // Determine mode: email OTP or phone OTP
   const isEmailMode = !phone && email && typeof email === "string" && email.includes("@");
 
   if (!isEmailMode && (!phone || typeof phone !== "string" || phone.trim().length < 7)) {
@@ -113,12 +115,28 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     return;
   }
 
-  // Identifier stored in the `phone` column of otp_codes (works for both phone & email)
   const identifier = isEmailMode
     ? email.trim().toLowerCase()
     : normalizePhone(phone.trim());
 
-  // Rate limit: max 1 OTP per minute per identifier
+  // ── Phone OTP via Twilio Verify (no DB row needed) ──────────────────────────
+  if (!isEmailMode && twilioVerifyConfigured()) {
+    try {
+      await sendTwilioVerify(identifier, "whatsapp");
+      res.json({
+        success: true,
+        channel: "twilio-verify-whatsapp",
+        message: `Code envoyé via WhatsApp à ${identifier}`,
+        otpSent: true,
+      });
+    } catch (err: any) {
+      console.error(`[OTP] Twilio Verify send failed for ${identifier}:`, err?.message ?? err);
+      res.status(502).json({ error: "Impossible d'envoyer le code WhatsApp. Réessayez dans un instant." });
+    }
+    return;
+  }
+
+  // ── Email OTP / legacy phone OTP — DB-managed ───────────────────────────────
   const recentOtp = await db
     .select()
     .from(otpCodesTable)
@@ -190,13 +208,98 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     return;
   }
 
-  // Support both phone OTP and email OTP — normalize the identifier the same
-  // way send-otp did so the OTP record lookup finds the right record.
   const isEmailMode = !phone && email && typeof email === "string" && email.includes("@");
   const identifier = isEmailMode
     ? email.trim().toLowerCase()
     : normalizePhone((phone as string).trim());
 
+  // ── Phone OTP via Twilio Verify ─────────────────────────────────────────────
+  if (!isEmailMode && twilioVerifyConfigured()) {
+    let verifyStatus: "approved" | "pending" | "expired";
+    try {
+      verifyStatus = await checkTwilioVerify(identifier, (code as string).trim());
+    } catch (err: any) {
+      console.error(`[OTP] Twilio Verify check failed for ${identifier}:`, err?.message ?? err);
+      res.status(502).json({ error: "Impossible de vérifier le code. Réessayez." });
+      return;
+    }
+
+    if (verifyStatus === "expired") {
+      res.status(400).json({ error: "Code expiré ou introuvable. Demandez un nouveau code." });
+      return;
+    }
+    if (verifyStatus !== "approved") {
+      res.status(400).json({ error: "Code incorrect." });
+      return;
+    }
+
+    // Code approved — proceed to account creation (signup) or login lookup below.
+    const isSignup = intent === "signup";
+    if (!isSignup && role !== "driver") {
+      res.status(400).json({ error: "Le code WhatsApp est réservé à l'inscription" });
+      return;
+    }
+
+    if (isSignup) {
+      if (!phone || !name || typeof name !== "string" || name.trim().length < 2) {
+        res.status(400).json({ error: "Nom requis pour créer le compte" });
+        return;
+      }
+      if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        res.status(400).json({ error: "Adresse email valide requise" });
+        return;
+      }
+      if (!password || typeof password !== "string" || password.length < 8) {
+        res.status(400).json({ error: "Le mot de passe doit comporter au moins 8 caractères" });
+        return;
+      }
+
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPhone = normalizePhone(String(phone).trim());
+      const [emailUser, phoneUser] = await Promise.all([
+        db.select().from(usersTable).where(eq(usersTable.email, normalizedEmail)).limit(1),
+        db.select().from(usersTable).where(eq(usersTable.phone, normalizedPhone)).limit(1),
+      ]);
+      if (emailUser.length > 0) {
+        res.status(409).json({ error: "Cette adresse email est déjà utilisée" });
+        return;
+      }
+      if (phoneUser.length > 0) {
+        res.status(409).json({ error: "Ce numéro WhatsApp possède déjà un compte" });
+        return;
+      }
+
+      const hashed = await bcrypt.hash(password, 10);
+      const [newUser] = await db.insert(usersTable).values({
+        name: name.trim(),
+        email: normalizedEmail,
+        password: hashed,
+        role: "customer",
+        phone: normalizePhone(String(phone).trim()),
+        loyaltyPoints: 0,
+        isActive: true,
+      }).returning();
+
+      const token = jwt.sign({ userId: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: "30d" });
+      const { password: _pw, ...safeUser } = newUser;
+      res.status(201).json({ token, user: safeUser, isNewUser: true });
+      return;
+    }
+
+    // Driver login via phone OTP
+    const [existingUser] = await db
+      .select().from(usersTable).where(eq(usersTable.phone, identifier)).limit(1);
+    if (!existingUser) {
+      res.status(404).json({ error: "Aucun compte trouvé pour ce numéro" });
+      return;
+    }
+    const token = jwt.sign({ userId: existingUser.id, role: existingUser.role }, JWT_SECRET, { expiresIn: "30d" });
+    const { password: _pw, ...safeUser } = existingUser;
+    res.json({ token, user: safeUser, isNewUser: false });
+    return;
+  }
+
+  // ── Email OTP / legacy phone OTP — DB-managed ───────────────────────────────
   const now = new Date();
 
   const [otpRecord] = await db
@@ -238,9 +341,6 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   }
 
   const isSignup = intent === "signup";
-  // WhatsApp OTP is intentionally only the first step of account creation.
-  // Existing customers authenticate with email/password; never create a
-  // passwordless "phone_xxx@jatek.local" account as a side effect of login.
   if (!isSignup && !isEmailMode && role !== "driver") {
     res.status(400).json({ error: "Le code WhatsApp est réservé à l'inscription" });
     return;
