@@ -251,7 +251,7 @@ export function CartPreviewSheet({ visible, onClose }: Props) {
 
           <View style={styles.header}>
             <View style={styles.headerIconWrap}>
-              <Ionicons name="bag-handle" size={20} color={PINK} />
+              <Ionicons name="cart" size={20} color={PINK} />
               {itemCount > 0 && (
                 <View style={styles.headerBadge}>
                   <Text style={styles.headerBadgeTxt}>
@@ -286,7 +286,7 @@ export function CartPreviewSheet({ visible, onClose }: Props) {
           {items.length === 0 ? (
             <View style={styles.emptyWrap}>
               <View style={styles.emptyIcon}>
-                <Ionicons name="bag-handle-outline" size={42} color={PINK} />
+                <Ionicons name="cart-outline" size={42} color={PINK} />
               </View>
               <Text style={styles.emptyTitle}>Votre panier est vide</Text>
               <Text style={styles.emptyTxt}>

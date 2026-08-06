@@ -88,7 +88,7 @@ function OrdersTabIcon({ focused, count }: { focused: boolean; count: number }) 
   const color = focused ? PINK : INACTIVE;
   return (
     <Animated.View style={[s.iconWrap, { transform: [{ scale: pulse }] }]}>
-      <Ionicons name="bag-handle" size={26} color={color} />
+      <Ionicons name={focused || count > 0 ? "receipt" : "receipt-outline"} size={26} color={color} />
       {count > 0 && (
         <View style={s.badge}>
           <Text style={s.badgeTxt}>{count > 9 ? "9+" : count}</Text>
