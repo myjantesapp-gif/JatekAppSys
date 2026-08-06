@@ -8,12 +8,17 @@
       "developmentClient": true,
       "distribution": "internal",
       "credentialsSource": "remote",
+      "cache": {
+        "key": "gradle-dev-v1",
+        "paths": ["~/.gradle/caches", "~/.gradle/wrapper"]
+      },
       "env": {
         "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "PNPM_VERSION": "10.26.1",
         "EXPO_OWNER": "straightpath",
         "EXPO_SLUG": "jatekmobile",
+        "npm_config_frozen_lockfile": "false",
         "pnpm_config_frozen_lockfile": "false",
         "NODE_VERSION": "20"
       },
@@ -24,25 +29,34 @@
     },
     "preview": {
       "distribution": "internal",
-      "autoIncrement": false,
       "channel": "preview",
       "credentialsSource": "remote",
+      "cache": {
+        "key": "gradle-preview-v1",
+        "paths": ["~/.gradle/caches", "~/.gradle/wrapper"]
+      },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "EXPO_PUBLIC_PROJECT_ID": "d29ba8e6-bdfb-4019-9888-d7045ed65d71",
         "PNPM_VERSION": "10.26.1",
         "EXPO_OWNER": "straightpath",
         "EXPO_SLUG": "jatekmobile",
+        "npm_config_frozen_lockfile": "false",
         "pnpm_config_frozen_lockfile": "false",
         "NODE_VERSION": "20"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
     },
     "production": {
       "channel": "production",
       "credentialsSource": "remote",
+      "cache": {
+        "key": "gradle-prod-v1",
+        "paths": ["~/.gradle/caches", "~/.gradle/wrapper"]
+      },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ma.jatek.app",
         "EXPO_PUBLIC_API_URL": "https://ma.jatek.app",
@@ -50,6 +64,7 @@
         "PNPM_VERSION": "10.26.1",
         "EXPO_OWNER": "straightpath",
         "EXPO_SLUG": "jatekmobile",
+        "npm_config_frozen_lockfile": "false",
         "pnpm_config_frozen_lockfile": "false",
         "NODE_VERSION": "20"
       },
