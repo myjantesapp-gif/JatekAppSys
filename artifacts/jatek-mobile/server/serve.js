@@ -22,7 +22,7 @@ const basePath = (process.env.BASE_PATH || "/").replace(/\/+$/, "");
 // mobile build variables, so a stale fallback here makes the published QR code
 // load a different Expo project than the current Android preview APK.
 const EAS_PROJECT_ID =
-  process.env.EXPO_PUBLIC_PROJECT_ID || "d29ba8e6-bdfb-4019-9888-d7045ed65d71";
+  process.env.EXPO_PUBLIC_PROJECT_ID || "d30cddea-9dd6-42aa-8339-80d86b9ad76e";
 const EAS_CHANNEL = process.env.EXPO_CHANNEL_NAME || "preview";
 const EAS_UPDATE_URL = `https://u.expo.dev/${EAS_PROJECT_ID}`;
 
