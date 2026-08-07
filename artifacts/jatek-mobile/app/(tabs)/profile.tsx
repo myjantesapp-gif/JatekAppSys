@@ -211,7 +211,11 @@ export default function ProfileScreen() {
 
       {/* Jatek+ premium upsell */}
       <Animated.View entering={FadeInDown.delay(80).duration(380)}>
-        <TouchableOpacity activeOpacity={0.85} style={[styles.premiumCard, { backgroundColor: "#0A1B3D" }]}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.premiumCard, { backgroundColor: "#0A1B3D" }]}
+          onPress={() => router.push({ pathname: "/offer/[key]", params: { key: "pro" } })}
+        >
           <View style={styles.premiumIcon}>
             <Ionicons name="sparkles" size={22} color="#FFD700" />
           </View>

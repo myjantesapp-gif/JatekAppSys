@@ -353,8 +353,8 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   activeOpacity={0.85}
                   style={s.iconBtn}
-                  onPress={() => router.push("/(tabs)/orders" as any)}
-                  accessibilityLabel="Mes commandes"
+                  onPress={() => router.push("/cart" as any)}
+                  accessibilityLabel="Mon panier"
                 >
                   <Ionicons name="bag-handle" size={22} color="#fff" />
                   {itemCount > 0 && (

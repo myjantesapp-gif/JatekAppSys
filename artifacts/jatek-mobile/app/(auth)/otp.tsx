@@ -20,6 +20,7 @@ export default function OtpScreen() {
     phone?: string;
     email?: string;
     demoOtp?: string;
+    demo?: string;
     channel?: string;
     intent?: string;
   }>();
@@ -42,7 +43,7 @@ export default function OtpScreen() {
   }, [countdown]);
 
   useEffect(() => {
-    if (params.demoOtp && params.demoOtp.length === 6) {
+    if (params.demo === "1" && params.demoOtp && params.demoOtp.length === 6) {
       setDigits(params.demoOtp.split("").slice(0, 6));
     }
   }, [params.demoOtp]);
@@ -96,7 +97,7 @@ export default function OtpScreen() {
     sendOtp.mutate({ data: (isEmailMode ? { email: identifier } : { phone: identifier }) as any }, {
       onSuccess: (res: any) => {
         setCountdown(60);
-        setDigits(res?.demoOtp?.length === 6 ? res.demoOtp.split("") : ["", "", "", "", "", ""]);
+        setDigits(res?.demo === "1" && res?.demoOtp?.length === 6 ? res.demoOtp.split("") : ["", "", "", "", "", ""]);
         setError("");
       },
       onError: (err: any) => setError(err?.data?.error || t("login_send_fail")),
@@ -134,7 +135,7 @@ export default function OtpScreen() {
           <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{identifier}</Text>
         </Text>
 
-        {params.demoOtp ? (
+        {params.demo === "1" && params.demoOtp ? (
           <View style={[styles.demoBanner, { backgroundColor: colors.yellowSoft, borderColor: colors.yellow }]}>
             <Ionicons name="information-circle-outline" size={16} color={colors.yellowForeground} />
             <Text style={[styles.demoText, { color: colors.yellowForeground }]}>

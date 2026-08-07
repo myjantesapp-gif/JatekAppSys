@@ -183,6 +183,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     deliveryFailed = true;
     console.error(`[OTP] all providers failed for ${identifier}:`, err?.message ?? err);
     if (!canExposeDemoOtp) {
+      await db.delete(otpCodesTable).where(eq(otpCodesTable.phone, identifier));
       res.status(502).json({ error: "Impossible d'envoyer le code. Réessayez dans un instant." });
       return;
     }
@@ -282,11 +283,15 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       return;
     }
 
-    // Driver login via phone OTP
+    // Existing account login via phone OTP
     const [existingUser] = await db
       .select().from(usersTable).where(eq(usersTable.phone, identifier)).limit(1);
     if (!existingUser) {
       res.status(404).json({ error: "Aucun compte trouvé pour ce numéro" });
+      return;
+    }
+    if (!existingUser.isActive) {
+      res.status(403).json({ error: "Ce compte est désactivé. Contactez le support." });
       return;
     }
     const token = jwt.sign({ userId: existingUser.id, role: existingUser.role }, JWT_SECRET, { expiresIn: "30d" });
@@ -337,8 +342,22 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   }
 
   const isSignup = intent === "signup";
-  if (!isSignup && !isEmailMode && role !== "driver") {
-    res.status(400).json({ error: "Le code WhatsApp est réservé à l'inscription" });
+  if (!isSignup && !isEmailMode) {
+    const [existingUser] = await db
+      .select().from(usersTable).where(eq(usersTable.phone, identifier)).limit(1);
+    if (!existingUser) {
+      res.status(404).json({ error: "Aucun compte trouvé pour ce numéro" });
+      return;
+    }
+    if (!existingUser.isActive) {
+      res.status(403).json({ error: "Ce compte est désactivé. Contactez le support." });
+      return;
+    }
+
+    await db.update(otpCodesTable).set({ used: true }).where(eq(otpCodesTable.id, otpRecord.id));
+    const token = jwt.sign({ userId: existingUser.id, role: existingUser.role }, JWT_SECRET, { expiresIn: "30d" });
+    const { password: _pw, ...safeUser } = existingUser;
+    res.json({ token, user: safeUser, isNewUser: false });
     return;
   }
 
