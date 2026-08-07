@@ -233,12 +233,8 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       return;
     }
 
-    // Code approved — proceed to account creation (signup) or login lookup below.
+    // Code approved — proceed to account creation (signup) or standard login.
     const isSignup = intent === "signup";
-    if (!isSignup && role !== "driver") {
-      res.status(400).json({ error: "Le code WhatsApp est réservé à l'inscription" });
-      return;
-    }
 
     if (isSignup) {
       if (!phone || !name || typeof name !== "string" || name.trim().length < 2) {
