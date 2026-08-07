@@ -35,3 +35,10 @@ id = "eKJHM_iCDfR0iUOPLpmKV"
 uri = "file://docs/stack-technique-et-couts.md"
 type = "text"
 title = "Stack Technique & Analyse des Coûts — Jatek"
+
+[[outputs]]
+id = "ezrWGahhkIEVTJohmw5mz"
+uri = "file://artifacts/jatek-mobile/builds/jatek-preview.apk"
+type = "unspecified"
+title = "Jatek Android Preview APK"
+description = "Jatek internal preview APK built successfully with the refreshed Expo credentials. Install it on an Android device for testing."

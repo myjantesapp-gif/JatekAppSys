@@ -5,7 +5,7 @@ description: EAS build quirks for the jatek-mobile pnpm monorepo workspace — c
 
 ## Rules
 
-1. **Use `app.config.js`, not `app.config.ts`** — EAS CLI reads the config via its own transpiler, which fails on TypeScript with `Cannot read properties of undefined (reading 'CommonJS')`. The plain JS version works reliably.
+1. **Use static `app.json`** — the managed Android build flow requires static Expo configuration; dynamic config files can break cloud builds.
 
 2. **Pin pnpm 10+ for EAS AND disable frozen-lockfile** — root `package.json` must have `"packageManager": "pnpm@10.x"` (EAS reads it) AND every build profile env in BOTH eas.json files must have `PNPM_VERSION` + BOTH `"npm_config_frozen_lockfile": "false"` AND `"pnpm_config_frozen_lockfile": "false"`. EAS Cloud sets `CI=true` which makes pnpm auto-enable `--frozen-lockfile`; combined with the 69 `catalog:` specifiers in the lockfile this causes the build to fail even with the correct pnpm version.
 
@@ -13,7 +13,7 @@ description: EAS build quirks for the jatek-mobile pnpm monorepo workspace — c
 
 2c. **Active EAS project = `@jatekplatforms-team/jatekclient`** (ID `d30cddea-9dd6-42aa-8339-80d86b9ad76e`). Use `EXPO_TOKEN_JATEK` (robot `Jatek`, role Admin on `jatekplatforms-team`). Previous project on `straightpath` (used `EXPO_TOKEN_DEV`) is now obsolete.
 
-3. **EAS CLI is local to jatek-mobile** — run as `node_modules/.bin/eas` from `artifacts/jatek-mobile/`. Not globally installed. Command: `EXPO_TOKEN=$EXPO_TOKEN_JATEK node_modules/.bin/eas build --profile <profile> --platform android --non-interactive --no-wait`.
+3. **EAS CLI is local to jatek-mobile** — run through `scripts/eas-build.sh`, which forces the Jatek project credentials and project ID, using `node_modules/.bin/eas` from `artifacts/jatek-mobile/`.
 
 4. **OTA update command** — `EXPO_TOKEN=$EXPO_TOKEN_JATEK node_modules/.bin/eas update --channel preview --message "..." --non-interactive` — bundles both iOS and Android, uploads to EAS.
 
@@ -33,4 +33,4 @@ description: EAS build quirks for the jatek-mobile pnpm monorepo workspace — c
 
 **Why:** Account migrated from `straightpath` to `jatekplatforms-team` with new project ID and slug. New keystore generated in the cloud by EAS on first build.
 
-**How to apply:** Any time you touch `app.config.*`, `eas.json`, `serve.js`, or run `eas build`/`eas update` commands.
+**How to apply:** Any time you touch `app.json`, `eas.json`, `serve.js`, or run `eas build`/`eas update` commands.
