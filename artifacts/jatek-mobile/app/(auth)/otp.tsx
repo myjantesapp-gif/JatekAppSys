@@ -97,7 +97,7 @@ export default function OtpScreen() {
     sendOtp.mutate({ data: (isEmailMode ? { email: identifier } : { phone: identifier }) as any }, {
       onSuccess: (res: any) => {
         setCountdown(60);
-        setDigits(res?.demo === "1" && res?.demoOtp?.length === 6 ? res.demoOtp.split("") : ["", "", "", "", "", ""]);
+        setDigits(res?.demoOtp?.length === 6 ? res.demoOtp.split("") : ["", "", "", "", "", ""]);
         setError("");
       },
       onError: (err: any) => setError(err?.data?.error || t("login_send_fail")),
@@ -125,7 +125,7 @@ export default function OtpScreen() {
             color={isWhatsApp ? "#25D366" : colors.primary}
           />
           <Text style={[styles.channelBadgeText, { color: isWhatsApp ? "#25D366" : colors.primary }]}>
-            {isWhatsApp ? "Connexion via WhatsApp" : t("otp_via_whatsapp")}
+            {isWhatsApp ? "Connexion via WhatsApp" : t("otp_via_email")}
           </Text>
         </View>
 

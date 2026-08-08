@@ -77,8 +77,8 @@ export default function LoginScreen() {
           params: {
             phone: fullPhone,
             intent: "login",
-            demo: res?.demo ? "1" : "0",
-            demoOtp: res?.demo ? res.demoOtp ?? "" : "",
+            demo: res?.demoOtp ? "1" : "0",
+            demoOtp: res?.demoOtp ?? "",
             channel: res?.channel ?? "twilio-verify-whatsapp",
           },
         });
