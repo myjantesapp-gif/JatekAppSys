@@ -23,6 +23,7 @@ export default function OtpScreen() {
     demo?: string;
     channel?: string;
     intent?: string;
+    name?: string;
   }>();
   const identifier = params.email || params.phone || "";
   const isEmailMode = !!params.email && !params.phone;
@@ -55,7 +56,7 @@ export default function OtpScreen() {
     setError("");
 
     const payload: any = isEmailMode
-      ? { email: identifier, code: c }
+      ? { email: identifier, code: c, ...(params.name ? { name: params.name } : {}) }
       : { phone: identifier, code: c, intent: params.intent ?? "login" };
 
     verifyOtp.mutate({ data: payload }, {

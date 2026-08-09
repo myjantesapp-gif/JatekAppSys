@@ -8,51 +8,52 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/contexts/AuthContext";
 import { getApiBaseSafe } from "@/lib/apiBase";
 
 export default function RegisterScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { login } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = async () => {
+  const handleSendOtp = async () => {
     const trimName = name.trim();
     const trimEmail = email.trim().toLowerCase();
     if (trimName.length < 2) { setError("Saisissez votre prénom (2 caractères minimum)."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) { setError("Adresse email invalide."); return; }
-    if (password.length < 8) { setError("Le mot de passe doit comporter au moins 8 caractères."); return; }
-    if (password !== confirm) { setError("Les mots de passe ne correspondent pas."); return; }
     setError("");
-    setLoading("loading");
+    setLoading(true);
     try {
       const base = getApiBaseSafe();
-      const res = await fetch(`${base}/api/auth/register`, {
+      const res = await fetch(`${base}/api/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimName, email: trimEmail, password }),
+        body: JSON.stringify({ email: trimEmail }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erreur lors de l'inscription");
+      if (!res.ok) throw new Error(data.error ?? "Impossible d'envoyer le code");
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await login(data.token, data.user);
-      router.replace("/(tabs)");
+      router.push({
+        pathname: "/(auth)/otp",
+        params: {
+          email: trimEmail,
+          name: trimName,
+          intent: "signup",
+          demo: data.demoOtp ? "1" : "0",
+          demoOtp: data.demoOtp ?? "",
+          channel: data.channel ?? "email",
+        },
+      });
     } catch (e: any) {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError(e?.message ?? "Erreur lors de l'inscription");
+      setError(e?.message ?? "Erreur lors de l'envoi du code");
     } finally {
-      setLoading("");
+      setLoading(false);
     }
   };
-
-  const pending = loading === "loading";
 
   return (
     <SafeAreaView style={[styles.flex, { backgroundColor: colors.background }]}>
@@ -79,8 +80,8 @@ export default function RegisterScreen() {
 
           <View style={styles.form}>
             <View style={[styles.channelBadge, { backgroundColor: colors.primary + "15" }]}>
-              <Ionicons name="person-add-outline" size={16} color={colors.primary} />
-              <Text style={[styles.channelBadgeText, { color: colors.primary }]}>Inscription par email</Text>
+              <Ionicons name="mail-outline" size={16} color={colors.primary} />
+              <Text style={[styles.channelBadgeText, { color: colors.primary }]}>Vérification par code email</Text>
             </View>
 
             <Text style={[styles.label, { color: colors.foreground }]}>Prénom</Text>
@@ -109,51 +110,27 @@ export default function RegisterScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                returnKeyType="next"
-              />
-            </View>
-
-            <Text style={[styles.label, { color: colors.foreground }]}>Mot de passe</Text>
-            <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Ionicons name="key-outline" size={18} color={colors.mutedForeground} style={{ paddingLeft: 14 }} />
-              <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="8 caractères minimum"
-                placeholderTextColor={colors.mutedForeground}
-                value={password}
-                onChangeText={(v) => { setPassword(v); setError(""); }}
-                secureTextEntry
-                returnKeyType="next"
-              />
-            </View>
-
-            <Text style={[styles.label, { color: colors.foreground }]}>Confirmer le mot de passe</Text>
-            <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Ionicons name="shield-checkmark-outline" size={18} color={colors.mutedForeground} style={{ paddingLeft: 14 }} />
-              <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="Répétez le mot de passe"
-                placeholderTextColor={colors.mutedForeground}
-                value={confirm}
-                onChangeText={(v) => { setConfirm(v); setError(""); }}
-                secureTextEntry
                 returnKeyType="done"
-                onSubmitEditing={handleRegister}
+                onSubmitEditing={handleSendOtp}
               />
             </View>
+
+            <Text style={[styles.helperText, { color: colors.mutedForeground }]}>
+              Un code à 6 chiffres sera envoyé à votre adresse email pour confirmer votre inscription.
+            </Text>
 
             {error ? <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text> : null}
 
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: colors.primary, opacity: pending ? 0.7 : 1 }]}
-              onPress={handleRegister}
-              disabled={pending}
+              style={[styles.btn, { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 }]}
+              onPress={handleSendOtp}
+              disabled={loading}
               activeOpacity={0.8}
             >
-              {pending ? <ActivityIndicator color="#fff" size="small" /> : (
+              {loading ? <ActivityIndicator color="#fff" size="small" /> : (
                 <>
-                  <Ionicons name="person-add-outline" size={20} color="#fff" />
-                  <Text style={styles.btnText}>Créer mon compte</Text>
+                  <Ionicons name="send-outline" size={20} color="#fff" />
+                  <Text style={styles.btnText}>Recevoir le code</Text>
                   <Ionicons name="arrow-forward" size={20} color="#fff" />
                 </>
               )}
@@ -183,6 +160,7 @@ const styles = StyleSheet.create({
   channelBadgeText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   inputRow: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1.5, height: 54, overflow: "hidden" },
   input: { flex: 1, fontSize: 16, fontFamily: "Inter_400Regular", paddingHorizontal: 14 },
+  helperText: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", paddingHorizontal: 4 },
   errorText: { fontSize: 13, fontFamily: "Inter_400Regular" },
   btn: { height: 54, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6 },
   btnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_600SemiBold" },
