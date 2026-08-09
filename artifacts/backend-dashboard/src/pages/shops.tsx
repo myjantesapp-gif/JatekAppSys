@@ -53,6 +53,7 @@ export default function Shops() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const isAdmin = me?.user.role === "admin" || me?.user.role === "super_admin";
+  const isOwner = me?.user.role === "restaurant_owner";
   const ownerCandidates = (staff || []).filter(
     (u: any) => ["restaurant_owner", "admin", "super_admin"].includes(u.role)
   );
@@ -195,150 +196,104 @@ export default function Shops() {
     deleteMutation.mutate(id);
   };
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Boutiques</h1>
-        {isAdmin && (
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2"><Plus className="h-4 w-4" /> Nouvelle boutique</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Créer une boutique</DialogTitle></DialogHeader>
-              <ShopForm
-                form={form} setForm={setForm} onSubmit={handleCreate}
-                pending={createMutation.isPending} submitLabel="Créer"
-                ownerCandidates={ownerCandidates} isAdmin={isAdmin}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+  // ── Owner-specific view: "Mon Restaurant" card ────────────────────────────
+  if (isOwner) {
+    const myShop = shops?.[0];
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Mon restaurant</h1>
 
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              className="pl-8"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        {isLoading && (
+          <Card><CardContent className="p-6"><Skeleton className="h-40 w-full" /></CardContent></Card>
+        )}
+
+        {!isLoading && !myShop && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground gap-3">
+              <Store className="h-12 w-12 opacity-30" />
+              <p className="font-medium">Aucun restaurant associé à votre compte.</p>
+              <p className="text-sm">Contactez un administrateur pour configurer votre espace.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {myShop && (
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Identity card */}
+            <Card className="lg:col-span-2">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row gap-5">
+                  {/* Logo */}
+                  <div className="h-24 w-24 rounded-xl bg-muted flex items-center justify-center overflow-hidden border-2 border-border flex-shrink-0 self-start">
+                    {myShop.logoUrl
+                      ? <img src={myShop.logoUrl} alt={myShop.name} className="h-full w-full object-cover" />
+                      : <Store className="h-10 w-10 text-muted-foreground" />
+                    }
+                  </div>
+                  {/* Details */}
+                  <div className="flex-1 space-y-3 min-w-0">
+                    <div className="flex flex-wrap items-start gap-3">
+                      <h2 className="text-xl font-bold truncate">{myShop.name}</h2>
+                      <Badge className={myShop.isOpen ? "bg-green-500 hover:bg-green-600 text-white" : "bg-destructive text-white shrink-0"}>
+                        {myShop.isOpen ? "Ouvert" : "Fermé"}
+                      </Badge>
+                    </div>
+                    {myShop.category && <Badge variant="outline">{myShop.category}</Badge>}
+                    {myShop.description && <p className="text-sm text-muted-foreground">{myShop.description}</p>}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-muted-foreground">
+                      {myShop.address && (
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+                          <span>{myShop.address}</span>
+                        </div>
+                      )}
+                      {myShop.phone && (
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-4 w-4 shrink-0" />
+                          <span>{myShop.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Rating */}
+                    {myShop.rating !== null && myShop.rating !== undefined && (
+                      <div className="flex items-center gap-1.5">
+                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                        <span className="font-semibold">{myShop.rating}</span>
+                        <span className="text-xs text-muted-foreground">({myShop.reviewCount} avis)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick actions */}
+            <Card>
+              <CardContent className="p-6 flex flex-col gap-3">
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1">Actions rapides</p>
+                <Button
+                  className="w-full gap-2 justify-start"
+                  variant={myShop.isOpen ? "destructive" : "default"}
+                  onClick={() => updateMutation.mutate({ id: myShop.id, data: { isOpen: !myShop.isOpen } })}
+                  disabled={updateMutation.isPending}
+                >
+                  {updateMutation.isPending
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <Store className="h-4 w-4" />}
+                  {myShop.isOpen ? "Fermer mon restaurant" : "Ouvrir mon restaurant"}
+                </Button>
+                <Button variant="outline" className="w-full gap-2 justify-start" onClick={() => openEdit(myShop)}>
+                  <Pencil className="h-4 w-4" /> Modifier les infos
+                </Button>
+                <Button variant="outline" className="w-full gap-2 justify-start" onClick={() => openHours(myShop.id)}>
+                  <Clock className="h-4 w-4" /> Gérer les horaires
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-4">Boutique</TableHead>
-                  <TableHead className="hidden sm:table-cell">Catégorie</TableHead>
-                  <TableHead className="hidden md:table-cell">Contact</TableHead>
-                  <TableHead className="hidden md:table-cell">Note</TableHead>
-                  <TableHead className="hidden lg:table-cell">Vedette</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right pr-4">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading
-                  ? Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="pl-4"><Skeleton className="h-10 w-48" /></TableCell>
-                        <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
-                        <TableCell className="hidden md:table-cell"><Skeleton className="h-8 w-32" /></TableCell>
-                        <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-12" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                        <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
-                      </TableRow>
-                    ))
-                  : shops?.length === 0
-                    ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                            Aucune boutique.
-                          </TableCell>
-                        </TableRow>
-                      )
-                    : shops?.map((shop) => (
-                        <TableRow key={shop.id}>
-                          <TableCell className="font-medium pl-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border flex-shrink-0">
-                                {shop.logoUrl
-                                  ? <img src={shop.logoUrl} alt={shop.name} className="h-full w-full object-cover" />
-                                  : <Store className="h-5 w-5 text-muted-foreground" />
-                                }
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-bold truncate max-w-[140px] sm:max-w-[200px]">{shop.name}</div>
-                                <div className="text-xs text-muted-foreground flex items-center mt-0.5">
-                                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                                  <span className="truncate max-w-[120px] sm:max-w-[180px]">{shop.address}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <Badge variant="outline">{shop.category}</Badge>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <div className="text-sm text-muted-foreground flex items-center">
-                              <Phone className="h-3 w-3 mr-1" />{shop.phone || "N/A"}
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                              <span className="font-medium text-sm">{shop.rating || "Nouveau"}</span>
-                              <span className="text-xs text-muted-foreground">({shop.reviewCount})</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {(shop as any).isFeatured
-                              ? <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                              : <span className="text-muted-foreground text-xs">—</span>
-                            }
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={shop.isOpen ? "bg-green-500 hover:bg-green-600" : "bg-destructive"}>
-                              {shop.isOpen ? "Ouvert" : "Fermé"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right pr-4">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                variant="ghost" size="icon" className="h-9 w-9"
-                                title="Horaires" onClick={() => openHours(shop.id)}
-                              >
-                                <Clock className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost" size="icon" className="h-9 w-9"
-                                onClick={() => openEdit(shop)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              {isAdmin && (
-                                <Button
-                                  variant="ghost" size="icon"
-                                  className="h-9 w-9 text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleDelete(shop.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {/* Shared dialogs — reused by both admin and owner views */}
 
       {/* Hours Dialog */}
       <Dialog open={!!hoursShopId} onOpenChange={(o) => !o && setHoursShopId(null)}>
@@ -410,6 +365,190 @@ export default function Shops() {
                     id="isOpen-switch"
                   />
                   <Label htmlFor="isOpen-switch">Ouvert</Label>
+                </div>
+              }
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+  // ── Admin table view ──────────────────────────────────────────────────────
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Boutiques</h1>
+        {isAdmin && (
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2"><Plus className="h-4 w-4" /> Nouvelle boutique</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle>Créer une boutique</DialogTitle></DialogHeader>
+              <ShopForm
+                form={form} setForm={setForm} onSubmit={handleCreate}
+                pending={createMutation.isPending} submitLabel="Créer"
+                ownerCandidates={ownerCandidates} isAdmin={isAdmin}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Rechercher..." className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="pl-4">Boutique</TableHead>
+                  <TableHead className="hidden sm:table-cell">Catégorie</TableHead>
+                  <TableHead className="hidden md:table-cell">Contact</TableHead>
+                  <TableHead className="hidden md:table-cell">Note</TableHead>
+                  <TableHead className="hidden lg:table-cell">Vedette</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-right pr-4">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="pl-4"><Skeleton className="h-10 w-48" /></TableCell>
+                        <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-8 w-32" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-12" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                      </TableRow>
+                    ))
+                  : shops?.length === 0
+                    ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                            Aucune boutique.
+                          </TableCell>
+                        </TableRow>
+                      )
+                    : shops?.map((shop) => (
+                        <TableRow key={shop.id}>
+                          <TableCell className="font-medium pl-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border flex-shrink-0">
+                                {shop.logoUrl
+                                  ? <img src={shop.logoUrl} alt={shop.name} className="h-full w-full object-cover" />
+                                  : <Store className="h-5 w-5 text-muted-foreground" />
+                                }
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold truncate max-w-[140px] sm:max-w-[200px]">{shop.name}</div>
+                                <div className="text-xs text-muted-foreground flex items-center mt-0.5">
+                                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                                  <span className="truncate max-w-[120px] sm:max-w-[180px]">{shop.address}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell"><Badge variant="outline">{shop.category}</Badge></TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="text-sm text-muted-foreground flex items-center">
+                              <Phone className="h-3 w-3 mr-1" />{shop.phone || "N/A"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                              <span className="font-medium text-sm">{shop.rating || "Nouveau"}</span>
+                              <span className="text-xs text-muted-foreground">({shop.reviewCount})</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {(shop as any).isFeatured
+                              ? <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                              : <span className="text-muted-foreground text-xs">—</span>
+                            }
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={shop.isOpen ? "bg-green-500 hover:bg-green-600" : "bg-destructive"}>
+                              {shop.isOpen ? "Ouvert" : "Fermé"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right pr-4">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" className="h-9 w-9" title="Horaires" onClick={() => openHours(shop.id)}>
+                                <Clock className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => openEdit(shop)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              {isAdmin && (
+                                <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10" onClick={() => handleDelete(shop.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hours Dialog */}
+      <Dialog open={!!hoursShopId} onOpenChange={(o) => !o && setHoursShopId(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>Horaires d'ouverture</DialogTitle></DialogHeader>
+          <div className="space-y-2 pt-2 max-h-[60vh] overflow-y-auto pr-1">
+            {hoursForm.map((row, idx) => (
+              <div key={row.dayOfWeek} className={`flex flex-wrap items-center gap-2 p-2 rounded-lg border ${row.isClosed ? "bg-muted/40 opacity-60" : ""}`}>
+                <span className="w-24 text-sm font-medium shrink-0">{DAY_LABELS[row.dayOfWeek]}</span>
+                <label className="flex items-center gap-1.5 text-xs shrink-0">
+                  <Switch checked={!row.isClosed} onCheckedChange={(v) => setHoursForm((h) => h.map((r, i) => i === idx ? { ...r, isClosed: !v } : r))} />
+                  {row.isClosed ? "Fermé" : "Ouvert"}
+                </label>
+                {!row.isClosed && (
+                  <>
+                    <Input type="time" className="flex-1 min-w-[90px] h-8 text-sm" value={row.openTime} onChange={(e) => setHoursForm((h) => h.map((r, i) => i === idx ? { ...r, openTime: e.target.value } : r))} />
+                    <span className="text-xs text-muted-foreground">→</span>
+                    <Input type="time" className="flex-1 min-w-[90px] h-8 text-sm" value={row.closeTime} onChange={(e) => setHoursForm((h) => h.map((r, i) => i === idx ? { ...r, closeTime: e.target.value } : r))} />
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => setHoursShopId(null)}>Annuler</Button>
+            <Button onClick={handleSaveHours} disabled={hoursSaving}>
+              {hoursSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Modifier {editing?.name}</DialogTitle></DialogHeader>
+          {editing && (
+            <ShopForm
+              form={editForm} setForm={setEditForm}
+              onSubmit={handleUpdate} pending={updateMutation.isPending}
+              submitLabel="Enregistrer"
+              ownerCandidates={ownerCandidates} isAdmin={isAdmin}
+              extra={
+                <div className="flex items-center gap-2">
+                  <Switch checked={editForm.isOpen} onCheckedChange={(v) => setEditForm({ ...editForm, isOpen: v })} id="isOpen-switch-admin" />
+                  <Label htmlFor="isOpen-switch-admin">Ouvert</Label>
                 </div>
               }
             />

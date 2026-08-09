@@ -82,8 +82,8 @@ function TodosWidget() {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle>My Todos</CardTitle>
-        <CardDescription>Tasks and reminders</CardDescription>
+        <CardTitle>Mes tâches</CardTitle>
+        <CardDescription>Notes et rappels</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <form onSubmit={handleAdd} className="flex space-x-2 mb-4">
@@ -141,13 +141,13 @@ function TodosWidget() {
   );
 }
 
-function RecentOrders() {
+function RecentOrders({ showRestaurant = true }: { showRestaurant?: boolean }) {
   const { data: orders, isLoading } = useListBackendOrders({ limit: 5 });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Orders</CardTitle>
+        <CardTitle>Commandes récentes</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -155,14 +155,14 @@ function RecentOrders() {
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
           </div>
         ) : !orders?.length ? (
-           <div className="text-center text-muted-foreground text-sm py-4">No recent orders.</div>
+           <div className="text-center text-muted-foreground text-sm py-4">Aucune commande récente.</div>
         ) : (
           <div className="space-y-4">
             {orders.map(order => (
               <div key={order.id} className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Order #{order.id}</p>
-                  <p className="text-xs text-muted-foreground">{order.restaurantName}</p>
+                  <p className="text-sm font-medium">Commande #{order.reference ?? order.id}</p>
+                  {showRestaurant && <p className="text-xs text-muted-foreground">{order.restaurantName}</p>}
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold">{order.total} DH</p>
@@ -185,11 +185,13 @@ export default function Dashboard() {
   const { data: dashboard, isLoading } = useGetBackendDashboard({ range });
 
   const isEmployee = me?.user.role === "employee";
+  const isOwner = me?.user.role === "restaurant_owner";
+  const pageTitle = isOwner ? "Tableau de bord" : "Vue d'ensemble";
 
   if (isLoading || !dashboard) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
         </div>
@@ -200,31 +202,35 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Overview</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{pageTitle}</h1>
         <Tabs value={range} onValueChange={(v) => setRange(v as GetBackendDashboardRange)}>
           <TabsList>
-            <TabsTrigger value="week">Week</TabsTrigger>
-            <TabsTrigger value="month">Month</TabsTrigger>
-            <TabsTrigger value="year">Year</TabsTrigger>
+            <TabsTrigger value="week">Semaine</TabsTrigger>
+            <TabsTrigger value="month">Mois</TabsTrigger>
+            <TabsTrigger value="year">Année</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="In Progress Orders" value={dashboard.inProgressOrders} icon={ShoppingCart} />
-        <KpiCard title="Delivered Orders" value={dashboard.deliveredOrders} icon={CheckCircle} />
-        <KpiCard title="Cancelled Orders" value={dashboard.cancelledOrders} icon={XCircle} />
-        <KpiCard title="Out of Stock" value={dashboard.outOfStockProducts} icon={AlertTriangle} />
+        <KpiCard title="Commandes en cours" value={dashboard.inProgressOrders} icon={ShoppingCart} />
+        <KpiCard title="Commandes livrées" value={dashboard.deliveredOrders} icon={CheckCircle} />
+        <KpiCard title="Commandes annulées" value={dashboard.cancelledOrders} icon={XCircle} />
+        <KpiCard title="Rupture de stock" value={dashboard.outOfStockProducts} icon={AlertTriangle} />
         
-        <KpiCard title="Total Products" value={dashboard.totalProducts} icon={Package} />
-        <KpiCard title="Reviews" value={dashboard.orderReviews} icon={Star} />
+        <KpiCard title="Produits actifs" value={dashboard.totalProducts} icon={Package} />
+        <KpiCard title="Avis clients" value={dashboard.orderReviews} icon={Star} />
         
         {!isEmployee && (
           <>
-            <KpiCard title="Total Earned" value={`${dashboard.totalEarned} DH`} icon={DollarSign} />
-            <KpiCard title="Delivery Earning" value={`${dashboard.deliveryEarning} DH`} icon={Truck} />
-            <KpiCard title="Tax" value={`${dashboard.totalOrderTax} DH`} icon={Receipt} />
-            <KpiCard title="Commission" value={`${dashboard.totalCommission} DH`} icon={Percent} />
+            <KpiCard title="Chiffre d'affaires" value={`${dashboard.totalEarned} DH`} icon={DollarSign} />
+            <KpiCard title="Frais de livraison" value={`${dashboard.deliveryEarning} DH`} icon={Truck} />
+            {!isOwner && (
+              <>
+                <KpiCard title="Taxes" value={`${dashboard.totalOrderTax} DH`} icon={Receipt} />
+                <KpiCard title="Commission" value={`${dashboard.totalCommission} DH`} icon={Percent} />
+              </>
+            )}
           </>
         )}
       </div>
@@ -232,7 +238,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Orders Overview</CardTitle>
+            <CardTitle>Aperçu des commandes</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
             <div className="h-[300px] w-full">
@@ -280,7 +286,7 @@ export default function Dashboard() {
       </div>
       
       <div className="grid gap-4 md:grid-cols-1">
-        <RecentOrders />
+        <RecentOrders showRestaurant={!isOwner} />
       </div>
     </div>
   );

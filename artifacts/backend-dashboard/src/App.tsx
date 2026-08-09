@@ -63,12 +63,14 @@ function Router() {
               <Route path="/" component={Dashboard} />
               <Route path="/orders" component={Orders} />
               <Route path="/products" component={Products} />
-              <Route path="/categories" component={Categories} />
               <Route path="/shops" component={Shops} />
               <Route path="/reviews" component={Reviews} />
               <Route path="/promotions" component={Promotions} />
-              <Route path="/vouchers" component={Vouchers} />
-              <Route path="/reports" component={Reports} />
+
+              {/* Blocked for restaurant_owner */}
+              <AdminRoute path="/categories" component={Categories} />
+              <AdminRoute path="/vouchers" component={Vouchers} />
+              <AdminRoute path="/reports" component={Reports} />
 
               {/* Admin-only routes — restaurant_owner is redirected to "/" */}
               <AdminRoute path="/customers" component={Customers} />

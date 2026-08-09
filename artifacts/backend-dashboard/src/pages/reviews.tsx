@@ -15,6 +15,9 @@ export default function Reviews() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const isAdmin = me?.user.role === "admin" || me?.user.role === "super_admin";
+  const isOwner = me?.user.role === "restaurant_owner";
+  // Owners can view their reviews but cannot delete them (moderation is admin's job)
+  const canDelete = isAdmin || me?.user.role === "manager";
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiFetch(`/api/backend/reviews/${id}`, { method: "DELETE" }),
@@ -67,16 +70,20 @@ export default function Reviews() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground italic">"{review.comment || "—"}"</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDelete(review.id)}
-                      disabled={deleteMutation.isPending}
-                      title="Supprimer cet avis"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {canDelete ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(review.id)}
+                        disabled={deleteMutation.isPending}
+                        title="Supprimer cet avis"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Radio, Truck, ShoppingCart, Clock, MapPin, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { Radio, Truck, ShoppingCart, Clock, MapPin, RefreshCw, Wifi } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
 

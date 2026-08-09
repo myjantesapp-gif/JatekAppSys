@@ -16,6 +16,10 @@ export const ADMIN_ONLY_PATHS = new Set([
   "/live-tracking",
   "/app-config",
   "/support",
+  // These are also hidden from restaurant_owner: no merchant use-case
+  "/categories",
+  "/vouchers",
+  "/reports",
 ]);
 
 /**

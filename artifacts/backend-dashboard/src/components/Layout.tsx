@@ -118,6 +118,21 @@ const navGroups: NavGroup[] = [
   },
 ];
 
+/** Dedicated, minimal nav for restaurant_owner — no admin/system sections. */
+const MERCHANT_NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Mon portail",
+    items: [
+      { href: "/", label: "Tableau de bord", icon: LayoutDashboard },
+      { href: "/orders", label: "Mes commandes", icon: ShoppingCart, badge: "pending" },
+      { href: "/products", label: "Mes produits", icon: Package },
+      { href: "/shops", label: "Mon restaurant", icon: Store },
+      { href: "/reviews", label: "Avis clients", icon: Star },
+      { href: "/promotions", label: "Promotions", icon: Tags },
+    ],
+  },
+];
+
 function NavList({
   groups,
   location,
@@ -212,6 +227,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const isOwner = me?.user.role === "restaurant_owner";
+
+  // Fetch owner's restaurant for sidebar branding (auto-scoped by JWT)
+  const { data: ownerShops } = useQuery<{ id: number; name: string; logoUrl: string | null }[]>({
+    queryKey: ["/api/backend/shops", "owner-branding"],
+    queryFn: () => apiFetch("/api/backend/shops"),
+    enabled: isOwner,
+    staleTime: 5 * 60_000,
+  });
+  const ownerShop = ownerShops?.[0];
+
   // Pending orders count for badge — poll every 30s
   const { data: pendingOrders } = useQuery<any[]>({
     queryKey: ["/api/backend/orders", "pending-badge"],
@@ -231,16 +257,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
     setLocation("/login");
   };
 
-  const filteredGroups = navGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter(
-        (item) => !item.hidden && (!item.roles || item.roles.includes(role))
-      ),
-    }))
-    .filter((group) => group.items.length > 0);
+  // Owners use a dedicated, minimal nav; admins use the full nav filtered by role
+  const filteredGroups = isOwner
+    ? MERCHANT_NAV_GROUPS
+    : navGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter(
+            (item) => !item.hidden && (!item.roles || item.roles.includes(role))
+          ),
+        }))
+        .filter((group) => group.items.length > 0);
 
   const navListProps = { pendingCount, openGroups, onToggleGroup: toggleGroup };
+
+  // Sidebar / mobile title: show restaurant name for owners
+  const sidebarTitle = isOwner
+    ? (ownerShop?.name ?? "Mon restaurant")
+    : "Jatek Admin";
+  const sidebarShort = isOwner
+    ? (ownerShop?.name?.charAt(0).toUpperCase() ?? "R")
+    : "J";
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -252,10 +289,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           {sidebarOpen && (
-            <span className="font-black text-xl text-primary tracking-tight">Jatek Admin</span>
+            <div className="flex items-center gap-2 min-w-0">
+              {isOwner && ownerShop?.logoUrl ? (
+                <img
+                  src={ownerShop.logoUrl}
+                  alt={ownerShop.name}
+                  className="h-8 w-8 rounded-md object-cover border border-border shrink-0"
+                />
+              ) : null}
+              <span className="font-black text-xl text-primary tracking-tight truncate">
+                {sidebarTitle}
+              </span>
+            </div>
           )}
           {!sidebarOpen && (
-            <span className="font-black text-xl text-primary tracking-tight mx-auto">J</span>
+            <span className="font-black text-xl text-primary tracking-tight mx-auto">
+              {sidebarShort}
+            </span>
           )}
           <Button
             variant="ghost"
@@ -279,9 +329,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0 bg-sidebar border-sidebar-border flex flex-col">
-          <SheetHeader className="h-16 shrink-0 flex flex-row items-center justify-start px-6 border-b border-sidebar-border space-y-0">
-            <SheetTitle className="font-black text-xl text-primary tracking-tight text-left">
-              Jatek Admin
+          <SheetHeader className="h-16 shrink-0 flex flex-row items-center justify-start px-6 border-b border-sidebar-border space-y-0 gap-2">
+            {isOwner && ownerShop?.logoUrl && (
+              <img
+                src={ownerShop.logoUrl}
+                alt={ownerShop.name}
+                className="h-7 w-7 rounded-md object-cover border border-border shrink-0"
+              />
+            )}
+            <SheetTitle className="font-black text-xl text-primary tracking-tight text-left truncate">
+              {sidebarTitle}
             </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto min-h-0 py-4">
@@ -310,12 +367,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" />
             </Button>
             {(() => {
-              const allItems = navGroups.flatMap((g) => g.items);
+              const allItems = (isOwner ? MERCHANT_NAV_GROUPS : navGroups).flatMap((g) => g.items);
               const active = allItems.find((item) => item.href === location);
               return active ? (
                 <span className="font-semibold text-base truncate">{active.label}</span>
               ) : (
-                <span className="font-black text-xl text-primary tracking-tight">Jatek</span>
+                <span className="font-black text-xl text-primary tracking-tight">
+                  {isOwner ? (ownerShop?.name ?? "Mon restaurant") : "Jatek"}
+                </span>
               );
             })()}
           </div>
