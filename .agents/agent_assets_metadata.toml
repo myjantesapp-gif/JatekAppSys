@@ -42,3 +42,10 @@ uri = "file://artifacts/jatek-mobile/builds/jatek-preview.apk"
 type = "unspecified"
 title = "Jatek Android Preview APK"
 description = "Jatek internal preview APK built successfully with the refreshed Expo credentials. Install it on an Android device for testing."
+
+[[outputs]]
+id = "5Dl390XXT4GF5ZBx2B0K5"
+uri = "file://e2e-report.md"
+type = "text"
+title = "Rapport E2E — Flux commande → livraison"
+description = "25/25 étapes ✅ · 0 bug · SSE validé · tokens et PII redactés"
