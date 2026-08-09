@@ -56,7 +56,7 @@ export default function OtpScreen() {
     setError("");
 
     const payload: any = isEmailMode
-      ? { email: identifier, code: c, ...(params.name ? { name: params.name } : {}) }
+      ? { email: identifier, code: c, intent: params.intent ?? "login", ...(params.name ? { name: params.name } : {}) }
       : { phone: identifier, code: c, intent: params.intent ?? "login" };
 
     verifyOtp.mutate({ data: payload }, {
@@ -68,12 +68,14 @@ export default function OtpScreen() {
       onError: (err: any) => {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         const msg = err?.data?.error || t("otp_invalid");
-        // If no account found, guide to register
-        const isNotFound = err?.status === 404 || msg?.toLowerCase().includes("introuvable") || msg?.toLowerCase().includes("aucun compte");
-        setError(isNotFound
-          ? "Aucun compte trouvé pour ce numéro. Inscrivez-vous d'abord."
-          : msg
-        );
+        if (!isEmailMode) {
+          // Phone mode: 404 means no account exists → guide to register
+          const isNotFound = err?.status === 404 || msg?.toLowerCase().includes("introuvable") || msg?.toLowerCase().includes("aucun compte");
+          setError(isNotFound ? "Aucun compte trouvé pour ce numéro. Inscrivez-vous d'abord." : msg);
+        } else {
+          // Email mode: account is created automatically or conflict if already used with signup intent
+          setError(msg);
+        }
       },
     });
   };

@@ -362,6 +362,47 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
   }
 
   if (isSignup) {
+    if (isEmailMode) {
+      // ── Email-only signup (OTP flow) — no phone or password required ──────────
+      if (!name || typeof name !== "string" || name.trim().length < 2) {
+        res.status(400).json({ error: "Nom requis pour créer le compte" });
+        return;
+      }
+
+      // Check if this email is already taken
+      const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, identifier)).limit(1);
+      if (existing) {
+        await db.update(otpCodesTable).set({ used: true }).where(eq(otpCodesTable.id, otpRecord.id));
+        // Email already has an account — log them in instead of erroring
+        if (!existing.isActive) {
+          res.status(403).json({ error: "Ce compte est désactivé. Contactez le support." });
+          return;
+        }
+        const token = jwt.sign({ userId: existing.id, role: existing.role }, JWT_SECRET, { expiresIn: "30d" });
+        const { password: _pw, ...safeUser } = existing;
+        res.json({ token, user: safeUser, isNewUser: false });
+        return;
+      }
+
+      const dummyPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+      const [newUser] = await db.insert(usersTable).values({
+        name: name.trim(),
+        email: identifier,
+        password: dummyPassword,
+        role: "customer",
+        phone: null,
+        loyaltyPoints: 0,
+        isActive: true,
+      }).returning();
+
+      await db.update(otpCodesTable).set({ used: true }).where(eq(otpCodesTable.id, otpRecord.id));
+      const token = jwt.sign({ userId: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: "30d" });
+      const { password: _pw, ...safeUser } = newUser;
+      res.status(201).json({ token, user: safeUser, isNewUser: true });
+      return;
+    }
+
+    // ── Phone-based signup (legacy flow requiring email + password) ────────────
     if (!phone || !name || typeof name !== "string" || name.trim().length < 2) {
       res.status(400).json({ error: "Nom requis pour créer le compte" });
       return;

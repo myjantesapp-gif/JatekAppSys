@@ -173,6 +173,14 @@ export default function AddressesScreen() {
             <Ionicons name="person-outline" size={18} color="#fff" />
             <Text style={[styles.authBtnText]}>Se connecter</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push("/(auth)/register")}
+            style={[styles.authBtn, styles.authBtnSecondary, { borderColor: colors.primary }]}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="person-add-outline" size={18} color={colors.primary} />
+            <Text style={[styles.authBtnText, { color: colors.primary }]}>Créer un compte</Text>
+          </TouchableOpacity>
           {router.canGoBack() && (
             <TouchableOpacity onPress={() => router.back()} style={styles.backLink} activeOpacity={0.7}>
               <Text style={[styles.backLinkText, { color: colors.mutedForeground }]}>Retour</Text>
@@ -284,6 +292,7 @@ const styles = StyleSheet.create({
   emptySub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
   authIconWrap: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", marginBottom: 4 },
   authBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 28, marginTop: 8 },
+  authBtnSecondary: { backgroundColor: "transparent", borderWidth: 1.5 },
   authBtnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_700Bold" },
   backLink: { marginTop: 8, paddingVertical: 8 },
   backLinkText: { fontSize: 14, fontFamily: "Inter_500Medium" },
