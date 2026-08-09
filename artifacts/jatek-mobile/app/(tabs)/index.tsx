@@ -461,7 +461,7 @@ export default function HomeScreen() {
               </View>
               <Text
                 style={[s.shopCatLabel, { color: c.accent }]}
-                numberOfLines={1}
+                numberOfLines={2}
                 adjustsFontSizeToFit
                 minimumFontScale={0.65}
               >
@@ -731,7 +731,7 @@ const s = StyleSheet.create({
   shopCatItem: {
     alignItems: "center",
     gap: 8,
-    width: 84,
+    width: 90,
   },
   shopCatTile: {
     width: 70,
@@ -1060,6 +1060,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
+    flexShrink: 0,
   },
   tileRatingTxt: {
     fontSize: 11,
@@ -1088,12 +1089,12 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    overflow: "hidden",
   },
   tileMetaTxt: {
     fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: TEXT_MUTED,
+    flexShrink: 1,
   },
   emptyTxt: {
     color: TEXT_MUTED,
