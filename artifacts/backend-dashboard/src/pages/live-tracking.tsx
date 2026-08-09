@@ -1,10 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Radio, Truck, ShoppingCart, Clock, MapPin, RefreshCw } from "lucide-react";
+import { Radio, Truck, ShoppingCart, Clock, MapPin, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -71,13 +71,83 @@ function StatCard({ title, value, sub, icon: Icon, color }: {
   );
 }
 
+/** Hook: subscribe to SSE admin_tracking channel; returns connection state.
+ *
+ * Listens for order_status, driver_location, and driver_offline — all events
+ * that modify data displayed on the live-tracking page. Any of these triggers
+ * a full refetch so coordinates, ETA, and online state update in real time.
+ *
+ * Reconnects automatically after an error (5 s backoff). The reconnect timer
+ * is stored in a ref and cancelled if the component unmounts between retries,
+ * preventing state-update calls and EventSource leaks on dead components.
+ */
+function useAdminTrackingSSE(onEvent: () => void) {
+  const [sseConnected, setSseConnected] = useState(false);
+  const esRef = useRef<EventSource | null>(null);
+  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable ref to the callback so the effect closure never goes stale
+  const onEventRef = useRef(onEvent);
+  useEffect(() => { onEventRef.current = onEvent; });
+
+  useEffect(() => {
+    const token = localStorage.getItem("jatek_backend_token");
+    if (!token) return;
+
+    let mounted = true;
+
+    function connect() {
+      if (!mounted) return;
+      const url = `/api/events?channels=admin_tracking&token=${encodeURIComponent(token!)}`;
+      const es = new EventSource(url);
+      esRef.current = es;
+
+      es.addEventListener("connected", () => { if (mounted) setSseConnected(true); });
+
+      // All three events modify displayed data — each triggers a full refetch.
+      const handler = () => { if (mounted) onEventRef.current(); };
+      es.addEventListener("order_status",   handler);
+      es.addEventListener("driver_location", handler);
+      es.addEventListener("driver_offline",  handler);
+
+      es.onerror = () => {
+        if (mounted) setSseConnected(false);
+        es.close();
+        esRef.current = null;
+        // Schedule reconnect, but only if still mounted
+        retryRef.current = setTimeout(connect, 5_000);
+      };
+    }
+
+    connect();
+
+    return () => {
+      mounted = false;
+      // Cancel any pending reconnect timer first
+      if (retryRef.current !== null) {
+        clearTimeout(retryRef.current);
+        retryRef.current = null;
+      }
+      esRef.current?.close();
+      esRef.current = null;
+      setSseConnected(false);
+    };
+  // Run once — onEvent is kept current via onEventRef
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return sseConnected;
+}
+
 export default function LiveTracking() {
-  const { data, isLoading, dataUpdatedAt } = useQuery<LiveTrackingData>({
+  const { data, isLoading, dataUpdatedAt, refetch } = useQuery<LiveTrackingData>({
     queryKey: ["backend/live-tracking"],
     queryFn: () => apiFetch("/api/backend/live-tracking"),
-    refetchInterval: 10_000,
+    // SSE triggers refetch on every order_status event; polling is a safety net only.
+    refetchInterval: 30_000,
     staleTime: 8_000,
   });
+
+  const sseConnected = useAdminTrackingSSE(() => refetch());
 
   const lastUpdate = dataUpdatedAt ? format(new Date(dataUpdatedAt), "HH:mm:ss") : "—";
 
@@ -96,8 +166,13 @@ export default function LiveTracking() {
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <RefreshCw className="h-3.5 w-3.5" />
-          Actualisation auto · Dernière mise à jour : {lastUpdate}
+          {sseConnected ? (
+            <Wifi className="h-3.5 w-3.5 text-green-500" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+          {sseConnected ? "Temps réel SSE" : "Actualisation auto (30 s)"}
+          {" · "}Dernière mise à jour : {lastUpdate}
         </div>
       </div>
 
