@@ -167,6 +167,9 @@ export default function FavoritesScreen() {
           <TouchableOpacity onPress={() => router.push("/(auth)/login")} style={[styles.cta, { backgroundColor: colors.primary }]}>
             <Text style={styles.ctaText}>Se connecter</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(auth)/register")} style={[styles.cta, styles.ctaOutline, { borderColor: colors.primary }]}>
+            <Text style={[styles.ctaText, { color: colors.primary }]}>Créer un compte</Text>
+          </TouchableOpacity>
         </View>
       ) : !isReady ? (
         <View style={styles.center}>
@@ -219,6 +222,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   ctaText: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold" },
+  ctaOutline: { backgroundColor: "transparent", borderWidth: 1.5, marginTop: 0 },
   card: {
     flexDirection: "row",
     alignItems: "center",

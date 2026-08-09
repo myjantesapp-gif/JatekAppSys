@@ -197,7 +197,8 @@ export const RegisterBody = zod.object({
   name: zod.string(),
   email: zod.string(),
   password: zod.string(),
-  role: zod.enum(["customer", "driver", "restaurant_owner", "admin"]),
+  // role is optional — the server always forces "customer" for public registration
+  role: zod.enum(["customer", "driver", "restaurant_owner", "admin"]).optional(),
   phone: zod.string().nullish(),
 });
 

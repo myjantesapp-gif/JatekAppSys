@@ -136,7 +136,7 @@ export default function RegisterScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.back()} style={styles.switchRow} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => router.replace("/(auth)/login")} style={styles.switchRow} activeOpacity={0.7}>
               <Ionicons name="log-in-outline" size={16} color={colors.primary} />
               <Text style={[styles.switchText, { color: colors.mutedForeground }]}>J'ai déjà un compte</Text>
             </TouchableOpacity>

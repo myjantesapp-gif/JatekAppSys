@@ -114,6 +114,13 @@ export default function OrdersScreen() {
           >
             <Text style={styles.loginBtnText}>Se connecter</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.registerBtn}
+            onPress={() => router.push("/(auth)/register" as any)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.registerBtnText}>Créer un compte</Text>
+          </TouchableOpacity>
         </View>
       ) : isLoading ? (
         <View style={styles.center}>
@@ -237,6 +244,19 @@ const styles = StyleSheet.create({
   },
   loginBtnText: {
     color: "#fff",
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+  },
+  registerBtn: {
+    marginTop: 4,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: PINK,
+  },
+  registerBtnText: {
+    color: PINK,
     fontSize: 15,
     fontFamily: "Inter_700Bold",
   },
