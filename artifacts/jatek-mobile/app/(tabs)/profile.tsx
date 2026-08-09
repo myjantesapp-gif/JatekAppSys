@@ -141,7 +141,7 @@ export default function ProfileScreen() {
         <View style={styles.guestCtaWrap}>
           <TouchableOpacity
             style={[styles.btnPrimary, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/(auth)/login")}
+            onPress={() => router.push("/(auth)/register")}
             activeOpacity={0.85}
           >
             <Text style={styles.btnPrimaryText}>Créer un compte</Text>
