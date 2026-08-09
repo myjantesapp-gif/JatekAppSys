@@ -28,7 +28,6 @@ import Animated, { FadeIn, FadeInDown, Layout } from "react-native-reanimated";
 import { router } from "expo-router";
 
 import {
-  useListDrivers,
   useUpdateDriver,
   useGetDriverEarnings,
   useListOrders,
@@ -41,6 +40,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSSE } from "@/hooks/useSSE";
 import {
   getApiBase,
+  fetchDriverMe,
   fetchAvailableOrders,
   acceptDelivery,
   confirmDelivery,
@@ -62,8 +62,17 @@ export default function DeliverScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
 
-  const { data: drivers, refetch: refetchDrivers } = useListDrivers();
-  const myDriver = drivers?.find((d) => d.userId === user?.id);
+  // Use /api/drivers/me instead of listing all drivers (admin-only endpoint)
+  const [myDriver, setMyDriver] = useState<any | null>(null);
+  const [driverLoading, setDriverLoading] = useState(true);
+
+  const loadMyDriver = useCallback(async () => {
+    const d = await fetchDriverMe();
+    setMyDriver(d);
+    setDriverLoading(false);
+  }, []);
+
+  useEffect(() => { loadMyDriver(); }, [loadMyDriver]);
 
   const updateDriver = useUpdateDriver();
   const updateStatus = useUpdateOrderStatus();
@@ -207,7 +216,7 @@ export default function DeliverScreen() {
       id: myDriver.id,
       data: { isAvailable: !isOnline },
     });
-    refetchDrivers();
+    loadMyDriver();
   };
 
   const onAccept = async (orderId: number) => {
@@ -264,7 +273,7 @@ export default function DeliverScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     haptic("light");
-    await Promise.all([loadAvailable(), refetchMyOrders(), refetchDrivers()]);
+    await Promise.all([loadAvailable(), refetchMyOrders(), loadMyDriver()]);
     setRefreshing(false);
   };
 

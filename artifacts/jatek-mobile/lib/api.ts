@@ -87,6 +87,16 @@ async function jsonFetch<T = any>(path: string, init?: RequestInit & { timeoutMs
 export function getApiBase(): string { return resolvedApiBase(); }
 
 // Drivers ------------------------------------------------------------
+
+/** Returns the driver profile linked to the currently-authenticated user. */
+export async function fetchDriverMe(): Promise<any | null> {
+  try {
+    return await jsonFetch("/api/drivers/me");
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchAvailableOrders(): Promise<any[]> {
   return jsonFetch("/api/orders/available");
 }

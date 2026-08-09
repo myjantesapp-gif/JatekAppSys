@@ -63,7 +63,11 @@ export default function OtpScreen() {
       onSuccess: async (res: any) => {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await login(res.token, res.user);
-        router.replace("/(tabs)");
+        // Redirect by role so drivers and merchants land on their own dashboard
+        const role = res.user?.role;
+        if (role === "driver") router.replace("/(tabs)/deliver");
+        else if (role === "restaurant_owner" || role === "owner") router.replace("/(tabs)/manage");
+        else router.replace("/(tabs)");
       },
       onError: (err: any) => {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

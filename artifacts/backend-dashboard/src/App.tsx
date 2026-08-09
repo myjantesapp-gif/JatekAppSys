@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { setAuthTokenGetter, useBackendMe } from "@workspace/api-client-react";
+import { Loader2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import { AuthGate } from "@/components/AuthGate";
 import { Layout } from "@/components/Layout";
@@ -40,10 +41,27 @@ setAuthTokenGetter(() => localStorage.getItem("jatek_backend_token"));
 /**
  * Wraps a route component so that restaurant_owner users are redirected to "/"
  * if they try to access an admin-only path.
+ *
+ * Uses the same queryKey as AuthGate so the profile is read from cache
+ * instantly — no extra fetch, no flash of admin content.
  */
 function AdminRoute({ path, component: Component }: { path: string; component: React.ComponentType }) {
-  const { data: me } = useBackendMe();
+  const { data: me, isLoading } = useBackendMe({
+    query: { queryKey: ["/api/backend/me"] },
+  });
   const role = me?.user?.role;
+
+  // While the profile is still resolving, render a neutral spinner rather
+  // than the protected page (prevents the brief flash of admin UI — task #12).
+  if (isLoading || !me) {
+    return (
+      <Route path={path}>
+        <div className="min-h-screen w-full flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </Route>
+    );
+  }
 
   if (role === "restaurant_owner" && ADMIN_ONLY_PATHS.has(path)) {
     return <Route path={path}><Redirect to="/" /></Route>;
