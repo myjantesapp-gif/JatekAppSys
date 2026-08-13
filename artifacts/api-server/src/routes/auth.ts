@@ -159,7 +159,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
   const messageBody = `Votre code Jatek : ${code}\nValable ${OTP_EXPIRY_MINUTES} minutes. Ne le communiquez à personne.`;
 
-  const providerReady = await anyOtpProviderConfigured();
+  const providerReady = anyOtpProviderConfigured();
   const isDev = process.env.NODE_ENV !== "production";
   const isLocalWorkspace = !process.env.REPLIT_DEPLOYMENT
     && !process.env.REPLIT_DEPLOYMENT_ID
@@ -594,7 +594,7 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
   const isLocalWorkspace = !process.env.REPLIT_DEPLOYMENT
     && !process.env.REPLIT_DEPLOYMENT_ID
     && !process.env.REPLIT_DEPLOYMENT_DOMAIN;
-  const providerReady = await anyOtpProviderConfigured();
+  const providerReady = anyOtpProviderConfigured();
   const canExposeDemoOtp = isDev && !providerReady && isLocalWorkspace;
 
   // Constant-shape response — never reveal whether the email exists on the system.

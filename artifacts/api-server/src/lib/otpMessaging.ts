@@ -251,7 +251,7 @@ export async function sendOtpMessage(
 ): Promise<SendOtpResult> {
   const attempts: AttemptLog[] = [];
   const infobipReady = infobipConfigured();
-  const twilioReady = await twilioConfigured();
+  const twilioReady = twilioConfigured();
 
   type Step = { channel: OtpChannel; available: boolean; fn: () => Promise<void> };
   const steps: Step[] = [
@@ -292,8 +292,11 @@ export async function sendOtpMessage(
   throw new Error(`All OTP providers failed: ${summary}`);
 }
 
-export async function anyOtpProviderConfigured(): Promise<boolean> {
-  if (infobipConfigured()) return true;
-  if (resendConfigured()) return true;
-  return await twilioConfigured();
+export function anyOtpProviderConfigured(): boolean {
+  return (
+    twilioVerifyConfigured() ||
+    twilioConfigured() ||
+    infobipConfigured() ||
+    resendConfigured()
+  );
 }
