@@ -120,6 +120,8 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
     : normalizePhone(phone.trim());
 
   // ── Phone OTP via Twilio Verify (no DB row needed) ──────────────────────────
+  // On success: return immediately (no DB row needed).
+  // On failure: fall through to the DB-managed path so Infobip can serve as backup.
   if (!isEmailMode && twilioVerifyConfigured()) {
     try {
       await sendTwilioVerify(identifier, "whatsapp");
@@ -129,11 +131,11 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
         message: `Code envoyé via WhatsApp à ${identifier}`,
         otpSent: true,
       });
+      return;
     } catch (err: any) {
-      console.error(`[OTP] Twilio Verify send failed for ${identifier}:`, err?.message ?? err);
-      res.status(502).json({ error: "Impossible d'envoyer le code WhatsApp. Réessayez dans un instant." });
+      console.warn(`[OTP] Twilio Verify send failed for ${identifier}, falling back to DB-managed path:`, err?.message ?? err);
+      // Fall through to DB-managed OTP with legacy providers (Infobip, etc.)
     }
-    return;
   }
 
   // ── Email OTP / legacy phone OTP — DB-managed ───────────────────────────────
