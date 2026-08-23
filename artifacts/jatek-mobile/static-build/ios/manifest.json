@@ -1,0 +1,137 @@
+{
+  "id": "ccd28a6c-a4b0-4a2b-84dd-71f610c4a416",
+  "createdAt": "2026-08-23T19:32:18.881Z",
+  "runtimeVersion": "1.0.0",
+  "launchAsset": {
+    "key": "bundle-1787513538881-383",
+    "contentType": "application/javascript",
+    "url": "https://02b6bdf2-f2ae-434e-bec5-02384adfc299-00-jn4prfl8o6ah.picard.replit.dev/mobile/1787513538881-383/_expo/static/js/ios/bundle.js"
+  },
+  "assets": [],
+  "metadata": {},
+  "extra": {
+    "eas": {
+      "projectId": "d30cddea-9dd6-42aa-8339-80d86b9ad76e"
+    },
+    "expoClient": {
+      "name": "Jatek",
+      "slug": "jatekclient",
+      "owner": "jatekplatforms-team",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "icon": "./assets/images/icon.png",
+      "scheme": "jatek",
+      "userInterfaceStyle": "automatic",
+      "newArchEnabled": true,
+      "splash": {
+        "image": "./assets/images/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#FCB2D3",
+        "imageUrl": "http://127.0.0.1:8090/assets/./assets/images/splash.png"
+      },
+      "ios": {
+        "supportsTablet": false,
+        "bundleIdentifier": "ma.jatek.app",
+        "buildNumber": "2",
+        "googleServicesFile": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCFET0NUWVBFIHBsaXN0IFBVQkxJQyAiLS8vQXBwbGUvL0RURCBQTElTVCAxLjAvL0VOIiAiaHR0cDovL3d3dy5hcHBsZS5jb20vRFREcy9Qcm9wZXJ0eUxpc3QtMS4wLmR0ZCI+CjxwbGlzdCB2ZXJzaW9uPSIxLjAiPgo8ZGljdD4KCTxrZXk+Q0xJRU5UX0lEPC9rZXk+Cgk8c3RyaW5nPjE1MDEyMTM1OTA1MC1xdjFiZjdyb2JwM2ZndWk0MWIwOXZucjR1ZWk3Y2VycC5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbTwvc3RyaW5nPgoJPGtleT5SRVZFUlNFRF9DTElFTlRfSUQ8L2tleT4KCTxzdHJpbmc+Y29tLmdvb2dsZXVzZXJjb250ZW50LmFwcHMuMTUwMTIxMzU5MDUwLXF2MWJmN3JvYnAzZmd1aTQxYjA5dm5yNHVlaTdjZXJwPC9zdHJpbmc+Cgk8a2V5PkFORFJPSURfQ0xJRU5UX0lEPC9rZXk+Cgk8c3RyaW5nPjE1MDEyMTM1OTA1MC0xYmlxN2N0Z2luaDk1NjdoajdjcWJncHBnYmtwaXI3Ny5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbTwvc3RyaW5nPgoJPGtleT5BUElfS0VZPC9rZXk+Cgk8c3RyaW5nPkFJemFTeUJsSjRZS0c3Z1BjVWUyM0hOaVdINV9rME1ZMjVjSlpZUTwvc3RyaW5nPgoJPGtleT5HQ01fU0VOREVSX0lEPC9rZXk+Cgk8c3RyaW5nPjE1MDEyMTM1OTA1MDwvc3RyaW5nPgoJPGtleT5QTElTVF9WRVJTSU9OPC9rZXk+Cgk8c3RyaW5nPjE8L3N0cmluZz4KCTxrZXk+QlVORExFX0lEPC9rZXk+Cgk8c3RyaW5nPm1hLmphdGVrLmFwcDwvc3RyaW5nPgoJPGtleT5QUk9KRUNUX0lEPC9rZXk+Cgk8c3RyaW5nPmphdGVrMjAyNjwvc3RyaW5nPgoJPGtleT5TVE9SQUdFX0JVQ0tFVDwva2V5PgoJPHN0cmluZz5qYXRlazIwMjYuZmlyZWJhc2VzdG9yYWdlLmFwcDwvc3RyaW5nPgoJPGtleT5JU19BRFNfRU5BQkxFRDwva2V5PgoJPGZhbHNlPjwvZmFsc2U+Cgk8a2V5PklTX0FOQUxZVElDU19FTkFCTEVEPC9rZXk+Cgk8ZmFsc2U+PC9mYWxzZT4KCTxrZXk+SVNfQVBQSU5WSVRFX0VOQUJMRUQ8L2tleT4KCTx0cnVlPjwvdHJ1ZT4KCTxrZXk+SVNfR0NNX0VOQUJMRUQ8L2tleT4KCTx0cnVlPjwvdHJ1ZT4KCTxrZXk+SVNfU0lHTklOX0VOQUJMRUQ8L2tleT4KCTx0cnVlPjwvdHJ1ZT4KCTxrZXk+R09PR0xFX0FQUF9JRDwva2V5PgoJPHN0cmluZz4xOjE1MDEyMTM1OTA1MDppb3M6NzkzYjE3MGM2MThjYmEyNTI3MzYzMzwvc3RyaW5nPgo8L2RpY3Q+CjwvcGxpc3Q+Cg==",
+        "infoPlist": {
+          "NSLocationWhenInUseUsageDescription": "Jatek uses your location to autofill your delivery address and confirm you are within our delivery zone in Oujda.",
+          "NSLocationAlwaysUsageDescription": "Jatek uses your location to autofill your delivery address.",
+          "ITSAppUsesNonExemptEncryption": false
+        }
+      },
+      "android": {
+        "package": "ma.jatek.app",
+        "versionCode": 13,
+        "googleServicesFile": "{\n  \"project_info\": {\n    \"project_number\": \"150121359050\",\n    \"project_id\": \"jatek2026\",\n    \"storage_bucket\": \"jatek2026.firebasestorage.app\"\n  },\n  \"client\": [\n    {\n      \"client_info\": {\n        \"mobilesdk_app_id\": \"1:150121359050:android:3f3c480240c97c4d273633\",\n        \"android_client_info\": {\n          \"package_name\": \"App.jatek.ma\"\n        }\n      },\n      \"oauth_client\": [\n        {\n          \"client_id\": \"150121359050-vini1dcsrkjsshfemuo8nfd8f18lg84b.apps.googleusercontent.com\",\n          \"client_type\": 3\n        }\n      ],\n      \"api_key\": [\n        {\n          \"current_key\": \"AIzaSyDZkjY6TqUfftwPZqAQpaRH9vDRjC61Svw\"\n        },\n        {\n          \"current_key\": \"AIzaSyAk-N-BJ9PD93-mkvz6fQdKBjzoTu1TnNw\"\n        }\n      ],\n      \"services\": {\n        \"appinvite_service\": {\n          \"other_platform_oauth_client\": [\n            {\n              \"client_id\": \"150121359050-vini1dcsrkjsshfemuo8nfd8f18lg84b.apps.googleusercontent.com\",\n              \"client_type\": 3\n            },\n            {\n              \"client_id\": \"150121359050-1l6koamibis14dhotma0cipt9l2efljm.apps.googleusercontent.com\",\n              \"client_type\": 2,\n              \"ios_info\": {\n                \"bundle_id\": \"com.jatek.app\"\n              }\n            }\n          ]\n        }\n      }\n    },\n    {\n      \"client_info\": {\n        \"mobilesdk_app_id\": \"1:150121359050:android:e3d9b072fe6f72e4273633\",\n        \"android_client_info\": {\n          \"package_name\": \"com.jatek\"\n        }\n      },\n      \"oauth_client\": [\n        {\n          \"client_id\": \"150121359050-1biq7ctginh9567hj7cqbgppgbkpir77.apps.googleusercontent.com\",\n          \"client_type\": 1,\n          \"android_info\": {\n            \"package_name\": \"com.jatek\",\n            \"certificate_hash\": \"a2ba47341282c9f9b750a6bd1b2a56589f83c3ed\"\n          }\n        },\n        {\n          \"client_id\": \"150121359050-milqfkjmes38hnob7jq9llctfcsnppdt.apps.googleusercontent.com\",\n          \"client_type\": 1,\n          \"android_info\": {\n            \"package_name\": \"com.jatek\",\n            \"certificate_hash\": \"a1f49ee6a310fae9c7d3deb5731a6ee6ff826efa\"\n          }\n        },\n        {\n          \"client_id\": \"150121359050-vini1dcsrkjsshfemuo8nfd8f18lg84b.apps.googleusercontent.com\",\n          \"client_type\": 3\n        }\n      ],\n      \"api_key\": [\n        {\n          \"current_key\": \"AIzaSyDZkjY6TqUfftwPZqAQpaRH9vDRjC61Svw\"\n        },\n        {\n          \"current_key\": \"AIzaSyAk-N-BJ9PD93-mkvz6fQdKBjzoTu1TnNw\"\n        }\n      ],\n      \"services\": {\n        \"appinvite_service\": {\n          \"other_platform_oauth_client\": [\n            {\n              \"client_id\": \"150121359050-vini1dcsrkjsshfemuo8nfd8f18lg84b.apps.googleusercontent.com\",\n              \"client_type\": 3\n            },\n            {\n              \"client_id\": \"150121359050-1l6koamibis14dhotma0cipt9l2efljm.apps.googleusercontent.com\",\n              \"client_type\": 2,\n              \"ios_info\": {\n                \"bundle_id\": \"com.jatek.app\"\n              }\n            }\n          ]\n        }\n      }\n    },\n    {\n      \"client_info\": {\n        \"mobilesdk_app_id\": \"1:150121359050:android:e3d9b072fe6f72e4273633\",\n        \"android_client_info\": {\n          \"package_name\": \"ma.jatek.app\"\n        }\n      },\n      \"oauth_client\": [\n        {\n          \"client_id\": \"150121359050-1biq7ctginh9567hj7cqbgppgbkpir77.apps.googleusercontent.com\",\n          \"client_type\": 1,\n          \"android_info\": {\n            \"package_name\": \"ma.jatek.app\",\n            \"certificate_hash\": \"a2ba47341282c9f9b750a6bd1b2a56589f83c3ed\"\n          }\n        },\n        {\n          \"client_id\": \"150121359050-vini1dcsrkjsshfemuo8nfd8f18lg84b.apps.googleusercontent.com\",\n          \"client_type\": 3\n        }\n      ],\n      \"api_key\": [\n        {\n          \"current_key\": \"AIzaSyDZkjY6TqUfftwPZqAQpaRH9vDRjC61Svw\"\n        },\n        {\n          \"current_key\": \"AIzaSyAk-N-BJ9PD93-mkvz6fQdKBjzoTu1TnNw\"\n        }\n      ],\n      \"services\": {\n        \"appinvite_service\": {\n          \"other_platform_oauth_client\": [\n            {\n              \"client_id\": \"150121359050-vini1dcsrkjsshfemuo8nfd8f18lg84b.apps.googleusercontent.com\",\n              \"client_type\": 3\n            }\n          ]\n        }\n      }\n    }\n  ],\n  \"configuration_version\": \"1\"\n}\n",
+        "permissions": [
+          "android.permission.ACCESS_COARSE_LOCATION",
+          "android.permission.ACCESS_FINE_LOCATION"
+        ],
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/images/adaptive-icon.png",
+          "backgroundColor": "#FCB2D3",
+          "foregroundImageUrl": "http://127.0.0.1:8090/assets/./assets/images/adaptive-icon.png"
+        }
+      },
+      "web": {
+        "favicon": "./assets/images/favicon.png"
+      },
+      "plugins": [
+        "expo-router",
+        "expo-updates",
+        [
+          "expo-location",
+          {
+            "locationWhenInUsePermission": "Allow Jatek to use your location to fill in your delivery address."
+          }
+        ],
+        [
+          "expo-notifications",
+          {
+            "icon": "./assets/images/icon.png",
+            "color": "#E91E63",
+            "androidMode": "default"
+          }
+        ]
+      ],
+      "updates": {
+        "url": "https://u.expo.dev/d30cddea-9dd6-42aa-8339-80d86b9ad76e",
+        "channel": "development"
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
+      },
+      "experiments": {
+        "typedRoutes": true
+      },
+      "extra": {
+        "eas": {
+          "projectId": "d30cddea-9dd6-42aa-8339-80d86b9ad76e"
+        },
+        "router": {}
+      },
+      "_internal": {
+        "isDebug": false,
+        "projectRoot": "/home/runner/workspace/artifacts/jatek-mobile",
+        "dynamicConfigPath": "/home/runner/workspace/artifacts/jatek-mobile/app.config.js",
+        "staticConfigPath": "/home/runner/workspace/artifacts/jatek-mobile/app.json",
+        "packageJsonPath": "/home/runner/workspace/artifacts/jatek-mobile/package.json",
+        "pluginHistory": {
+          "expo-updates": {
+            "name": "expo-updates",
+            "version": "29.0.19"
+          },
+          "expo-location": {
+            "name": "expo-location",
+            "version": "19.0.8"
+          },
+          "expo-notifications": {
+            "name": "expo-notifications",
+            "version": "0.32.17"
+          }
+        }
+      },
+      "sdkVersion": "54.0.0",
+      "platforms": [
+        "ios",
+        "android",
+        "web"
+      ],
+      "iconUrl": "http://127.0.0.1:8090/assets/./assets/images/icon.png",
+      "hostUri": "02b6bdf2-f2ae-434e-bec5-02384adfc299-00-jn4prfl8o6ah.picard.replit.dev/mobile/ios"
+    },
+    "expoGo": {
+      "debuggerHost": "02b6bdf2-f2ae-434e-bec5-02384adfc299-00-jn4prfl8o6ah.picard.replit.dev/mobile/ios",
+      "developer": {
+        "tool": "expo-cli",
+        "projectRoot": "/home/runner/workspace/artifacts/jatek-mobile"
+      },
+      "packagerOpts": {
+        "dev": false
+      },
+      "mainModuleName": "node_modules/.pnpm/expo-router@6.0.24_@types+react-dom@19.1.11_@types+react@19.1.17__@types+react@19.1.17__fdb348e3fa81840b33cbb7dec3670e5a/node_modules/expo-router/entry"
+    },
+    "scopeKey": "@anonymous/jatekclient-765221d3-9f20-4a83-aaec-1d75100e1e4d"
+  }
+}
