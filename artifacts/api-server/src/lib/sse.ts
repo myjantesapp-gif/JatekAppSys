@@ -16,6 +16,12 @@ interface Subscriber {
 }
 
 const subscribers = new Map<string, Subscriber>(); // clientId → Subscriber
+let socketPublisher: ((channel: string, eventName: string, data: unknown) => void) | null = null;
+
+/** Keep existing SSE consumers while forwarding driver events to Socket.IO. */
+export function setSocketPublisher(publisher: typeof socketPublisher): void {
+  socketPublisher = publisher;
+}
 
 let _counter = 0;
 function nextId() { return String(++_counter); }
@@ -51,6 +57,7 @@ export function subscribe(req: Request, res: Response, channels: string[]): void
 
 /** Publish an event to all subscribers of a channel. */
 export function publish(channel: string, eventName: string, data: unknown): void {
+  socketPublisher?.(channel, eventName, data);
   const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const [, sub] of subscribers) {
     if (sub.channels.has(channel) && !sub.res.writableEnded) {

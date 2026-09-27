@@ -99,4 +99,11 @@ check "/admin/"
 check "/api/healthz"
 check "/health"
 
+HANDSHAKE="$(curl -fsS --max-time 10 -H 'Origin: https://driver.jatek.app' \
+  "$BASE_URL/socket.io/?EIO=4&transport=polling" || true)"
+if [[ ! "$HANDSHAKE" =~ ^0\{\"sid\":\" ]]; then
+  fail "GET /socket.io/ did not return an Engine.IO open frame"
+fi
+echo "[smoke]   GET /socket.io/ → Engine.IO open frame"
+
 echo "[smoke] OK — production bundle boots and serves all expected routes."
