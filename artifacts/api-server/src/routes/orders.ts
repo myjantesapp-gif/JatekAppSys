@@ -762,6 +762,7 @@ router.post("/orders/:id/accept-delivery", requireAuth, async (req: AuthedReques
   publish(`order:${orderId}`, "order_status", { orderId, status: "picked_up", driverName: driver.name, order: orderWithItems });
   publish(`restaurant:${order.restaurantId}`, "order_status", { orderId, status: "picked_up", driverName: driver.name });
   publish("admin_tracking", "order_status", { orderId, status: "picked_up", driverId, driverName: driver.name });
+  publish(`driver_orders:${driverId}`, "order_assigned", { orderId, order: orderWithItems });
 
   // Customer push + in-app notification
   notifyCustomerStatus(order.userId, "picked_up", orderId, order.restaurantName);
